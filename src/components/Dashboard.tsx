@@ -1,142 +1,159 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-// import { useAppSelector } from "@/lib/hooks";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { GlassCard, PurpleCard } from "@/components/globals/cards";
+"use client"
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+import React from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
-  Legend
-);
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts"
+import { Bell, Users, Megaphone, ListOrdered } from "lucide-react"
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
 
 const Dashboard = () => {
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        grid: {
-          color: "rgba(255, 255, 255, 0.1)",
-        },
-      },
-    },
-  };
-
-  const router = useRouter();
-  const [filterDate] = useState<
-    "Month" | "Year" | "Week" | "Today" | "All"
-  >("All");
+  const router = useRouter()
 
   const generateRandomData = () => {
-    return {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-      messagesData: Array.from({ length: 12 }, () => Math.floor(Math.random() * 100)),
-      repliesData: Array.from({ length: 12 }, () => Math.floor(Math.random() * 100)),
-      messages: Math.floor(Math.random() * 1000),
-      replies: Math.floor(Math.random() * 1000),
-      response: Math.floor(Math.random() * 100),
-      audience: Math.floor(Math.random() * 10000),
+    const chartData = Array.from({ length: 12 }, (_, i) => ({
+      month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
+      messages: Math.floor(Math.random() * 100),
+      replies: Math.floor(Math.random() * 100),
+    }))
+
+    const stats = {
+      audience: Math.floor(Math.random() * 100),
       campaigns: Math.floor(Math.random() * 100),
       sequences: Math.floor(Math.random() * 50),
-    };
-  };
+      engagementRate: Math.floor(Math.random() * 100),
+      conversionRate: Math.floor(Math.random() * 100),
+    }
 
-  const [statsData, setStatsData] = useState(generateRandomData());
+    const pieData = [
+      { name: "Audience", value: stats.audience },
+      { name: "Campaigns", value: stats.campaigns },
+      { name: "Sequences", value: stats.sequences },
+      { name: "Engagement Rate", value: stats.engagementRate },
+      { name: "Conversion Rate", value: stats.conversionRate },
+    ]
 
-  useEffect(() => {
-    setStatsData(generateRandomData());
-  }, [filterDate]);
+    return { chartData, stats, pieData }
+  }
+
+  const [data, setData] = React.useState(generateRandomData())
+
+  const handleFilterChange = (value: string) => {
+    setData(generateRandomData())
+  }
 
   return (
-    <div className="flex flex-col gap-5 min-h-screen text-white px-4 sm:px-6 py-12 ">
-      <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-0 items-start sm:items-start">
-        <h2 className="text-xl sm:text-2xl font-semibold">Campaign Overview</h2>
-      </div>
-      <div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-          <PurpleCard head="Audiences" value={statsData.audience} />
-          <PurpleCard
-            head="Campaigns"
-            value={statsData.campaigns}
-            style={{
-              background:
-                "linear-gradient(55.76deg, #7371FC 4.44%, #A594F9 95.11%)",
-              border: "1px solid #FFFFFF33",
-            }}
-          />
-          <PurpleCard head="Sequences" value={statsData.sequences} />
-        </div>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold tracking-tight">Campaign Overview</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 sm:max-h-[345px] mt-5">
-        <div
-          className="lg:col-span-2 p-4 h-[200px] sm:h-full rounded-3xl w-full hidden sm:flex"
-          style={{
-            background:
-              "linear-gradient(160.61deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 101.7%)",
-            border: "1px solid #FFFFFF33",
-          }}
-        >
-          <Line
-            data={{
-              labels: statsData.labels,
-              datasets: [
-                {
-                  label: "Initial Message Sent",
-                  data: statsData.messagesData,
-                  borderColor: "#A594F9",
-                  tension: 0.4,
-                },
-                {
-                  label: "Replies Received",
-                  data: statsData.repliesData,
-                  borderColor: "#7371FC",
-                  tension: 0.4,
-                },
-              ],
-            }}
-            options={chartOptions}
-          />
-        </div>
-        <div className="flex flex-col gap-4 h-[50vh]">
-          <GlassCard className="h-full">
-            <div className="flex items-start gap-5 cursor-pointer">
-                <h1 className="text-2xl font-semibold">Notifications</h1>
-            </div>
-          </GlassCard>
-        </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Audience</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.stats.audience.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Campaigns</CardTitle>
+            <Megaphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.stats.campaigns}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sequences</CardTitle>
+            <ListOrdered className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.stats.sequences}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      
+      <Tabs defaultValue="all" onValueChange={handleFilterChange}>
+        <TabsList>
+          <TabsTrigger value="all">All Time</TabsTrigger>
+          <TabsTrigger value="year">Year</TabsTrigger>
+          <TabsTrigger value="month">Month</TabsTrigger>
+          <TabsTrigger value="week">Week</TabsTrigger>
+          <TabsTrigger value="today">Today</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all" className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Campaign Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={data.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="messages" name="Messages" stroke="#8884d8" activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="replies" name="Replies" stroke="#82ca9d" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={350}>
+                  <PieChart>
+                    <Pie
+                      data={data.pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {data.pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
+

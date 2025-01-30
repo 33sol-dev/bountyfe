@@ -26,14 +26,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="w-screen min-h-screen overflow-hidden flex items-start bg-[#131720]">
+    <div className="w-screen min-h-screen overflow-hidden flex text-black items-start">
       <Sidebar openSidebar={sidebarOpen} setOpenSidebar={setSidebarOpen} />
       <main className="flex flex-col flex-1 overflow-hidden h-screen">
         <div className="flex-1 overflow-auto mt-14 sm:mt-0">
           {isMobile && (
             <div className="w-full flex px-2 border-b border-b-[#3C3F47] pb-2 fixed top-0 left-0 z-[999] items-center justify-between">
               <Image
-                src="/images/logoPurple.webp"
+                src="/images/logo.png"
                 height={40}
                 width={120}
                 alt="logo"
@@ -47,8 +47,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </button>
             </div>
           )}
-          {/* Uncomment when ready to use
-          {loading ? <Loading /> : subscribed ? children : <NotSubscribed />} */}
           {children}
         </div>
       </main>

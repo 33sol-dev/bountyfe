@@ -1,37 +1,37 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, AlertCircle, Award, Plus } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+"use client"
+
+import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2, AlertCircle, DollarSign, Calendar, Tag, Plus } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link"
 
 interface Campaign {
-  id: string;
-  name: string;
-  description: string;
-  totalAmount: number;
-  tags: string[];
-  createdAt: string;
-  status: string;
+  id: string
+  name: string
+  description: string
+  totalAmount: number
+  tags: string[]
+  createdAt: string
+  status: string
 }
 
 const CampaignList = () => {
-  const router = useRouter();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const token = localStorage.getItem("token");
-
+        const token = localStorage.getItem("token")
         if (!token) {
-          router.push("/sign-in");
-          return;
+          router.push("/sign-in")
+          return
         }
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns`, {
@@ -39,14 +39,11 @@ const CampaignList = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        });
+        })
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch campaigns");
-        }
+        if (!response.ok) throw new Error("Failed to fetch campaigns")
 
-        const data = await response.json();
-
+        const data = await response.json()
         setCampaigns(
           data.campaigns.map((c: any) => ({
             id: c._id,
@@ -56,24 +53,24 @@ const CampaignList = () => {
             tags: c.tags,
             createdAt: c.createdAt,
             status: c.status,
-          }))
-        );
+          })),
+        )
       } catch (err: any) {
-        setError(err.message || "An error occurred while fetching campaigns");
+        setError(err.message || "An error occurred while fetching campaigns")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchCampaigns();
-  }, [router]);
+    fetchCampaigns()
+  }, [router])
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -83,110 +80,110 @@ const CampaignList = () => {
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
-    );
+    )
   }
 
   return (
-    <div className="p-6 min-h-screen text-white">
-      <div className="mb-12">
-        <div className="flex items-center space-x-4 mb-2">
-          <div className="p-3 bg-blue-600 rounded-lg">
-            <Award className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Campaigns
-          </h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Campaigns</h1>
+          <p className="text-muted-foreground">Manage and track your campaign performance</p>
         </div>
-        <p className="text-gray-400 ml-16">Manage and track your campaign performance</p>
-      </div>
-
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex space-x-2">
-          <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
-            All Campaigns ({campaigns.length})
-          </Button>
-          <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
-            Active ({campaigns.filter(c => c.status === 'Active').length})
-          </Button>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Link href="/campaigns/new" className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>New Campaign</span>
-          </Link>
+        <Button variant="outline" className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Campaign
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {campaigns.map((campaign) => (
-          <Card 
-            key={campaign.id} 
-            className="bg-gray-800/50 border border-gray-700 hover:border-blue-500/50 transition-all duration-300 rounded-lg"
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="mb-4 border-b rounded-none bg-transparent p-0 h-auto">
+          <TabsTrigger
+            value="all"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
           >
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                <div className="flex-1 mb-4 md:mb-0">
-                  <h2 className="text-xl font-semibold text-white mb-2">{campaign.name}</h2>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger className="cursor-pointer text-gray-400 hover:text-gray-300">
-                        {campaign.description}
-                      </TooltipTrigger>
-                      <TooltipContent>{campaign.description}</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="text-gray-400">
-                      <div className="text-sm">Total Amount</div>
-                      <div className="text-lg font-semibold text-white">
-                        ${campaign.totalAmount.toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="text-gray-400">
-                      <div className="text-sm">Created On</div>
-                      <div className="text-lg font-semibold text-white">
-                        {new Date(campaign.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
+            All Campaigns ({campaigns.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="active"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+          >
+            Active ({campaigns.filter((c) => c.status === "Active").length})
+          </TabsTrigger>
+        </TabsList>
 
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {campaign.tags.map((tag, index) => (
-                      <span 
-                        key={index}
-                        className="px-2 py-1 bg-gray-700/50 rounded-full text-xs text-gray-300"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+        <TabsContent value="all" className="grid gap-4 md:grid-cols-2">
+          {campaigns.map((campaign) => (
+            <CampaignCard key={campaign.id} campaign={campaign} />
+          ))}
+        </TabsContent>
 
-                <div className="flex flex-col items-start md:items-end space-y-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      campaign.status === "Active" 
-                        ? "bg-green-400/10 text-green-400 border border-green-400/20"
-                        : "bg-red-400/10 text-red-400 border border-red-400/20"
-                    }`}
-                  >
-                    {campaign.status}
-                  </span>
-                  <Button 
-                    variant="outline"
-                    className="border-gray-700 text-gray-300 hover:text-white hover:border-blue-500"
-                  >
-                    <Link href={`/drafts/${campaign.id}`}>Pay To Publish</Link>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        <TabsContent value="active" className="grid gap-4 md:grid-cols-2">
+          {campaigns
+            .filter((c) => c.status === "Active")
+            .map((campaign) => (
+              <CampaignCard key={campaign.id} campaign={campaign} />
+            ))}
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-};
+  )
+}
 
-export default CampaignList;
+const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
+  <Card className="border rounded-lg overflow-hidden">
+    <CardContent className="p-6 space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-medium">{campaign.name}</h3>
+          <p className="text-muted-foreground mt-1">{campaign.description}</p>
+        </div>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+          }`}
+        >
+          {campaign.status}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <DollarSign className="h-4 w-4" />
+            <span className="text-sm">Total Amount</span>
+          </div>
+          <p className="text-lg font-medium">${campaign.totalAmount}</p>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <Calendar className="h-4 w-4" />
+            <span className="text-sm">Created</span>
+          </div>
+          <p className="text-sm">{new Date(campaign.createdAt).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+          <Tag className="h-4 w-4" />
+          <span className="text-sm">Tags</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {campaign.tags.map((tag, index) => (
+            <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <Button variant="default" className="w-full bg-black text-white">
+        View Details
+      </Button>
+    </CardContent>
+  </Card>
+)
+
+export default CampaignList
+

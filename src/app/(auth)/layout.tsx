@@ -14,7 +14,7 @@ const layout = ({ children }: { children: ReactNode }) => {
       <div className="h-full w-[46vw] relative sm:flex items-center justify-center hidden">
         <div className="absolute h-full w-full z-10">
           <Image
-            src="/images/signupBG.png"
+            src="/images/bg.jpg"
             alt="Wave Logo"
             fill
             className="object-cover"

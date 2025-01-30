@@ -136,13 +136,13 @@ export default function CreateCampaignForm() {
   }
 
   return (
-    <div className=" p-6">
+    <div className=" p-4">
       <div className="max-w-7xl">
-        <h1 className="text-2xl font-bold mb-6 text-white">Create New Campaign</h1>
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold mb-6 text-black">Create New Campaign</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-300">
+              <Label htmlFor="name" className="text-black">
                 Campaign Name <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -152,11 +152,11 @@ export default function CreateCampaignForm() {
                 onChange={handleChange}
                 placeholder="Enter campaign name"
                 required
-                className="w-full bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="campaignType" className="text-gray-300">
+              <Label htmlFor="campaignType" className="text-black">
                 Campaign Type <span className="text-red-500">*</span>
               </Label>
               <Select 
@@ -165,21 +165,21 @@ export default function CreateCampaignForm() {
               >
                 <SelectTrigger 
                   id="campaignType"
-                  className="w-full bg-[#1f2937] border-gray-800 text-gray-100"
+                  className="w-full border-gray-700/10  text-black"
                 >
                   <SelectValue placeholder="Select campaign type" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f2937] border-gray-800">
-                  <SelectItem value="award" className="text-gray-100">Award</SelectItem>
-                  <SelectItem value="digital_activation" className="text-gray-100">Digital Activation</SelectItem>
-                  <SelectItem value="social_media" className="text-gray-100">Social Media</SelectItem>
-                  <SelectItem value="video" className="text-gray-100">Video</SelectItem>
-                  <SelectItem value="location_sharing" className="text-gray-100">Location Sharing</SelectItem>
+                <SelectContent className=" ">
+                  <SelectItem value="award" className="text-black">Award</SelectItem>
+                  <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem>
+                  <SelectItem value="social_media" className="text-black">Social Media</SelectItem>
+                  <SelectItem value="video" className="text-black">Video</SelectItem>
+                  <SelectItem value="location_sharing" className="text-black">Location Sharing</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalAmount" className="text-gray-300">Total Amount</Label>
+              <Label htmlFor="totalAmount" className="text-black">Total Amount</Label>
               <Input
                 id="totalAmount"
                 type="number"
@@ -187,48 +187,48 @@ export default function CreateCampaignForm() {
                 value={formData.totalAmount}
                 onChange={handleChange}
                 placeholder="Enter total amount"
-                className="w-full bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+                className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tags" className="text-gray-300">Tags (comma-separated)</Label>
+              <Label htmlFor="tags" className="text-black">Tags (comma-separated)</Label>
               <Input
                 id="tags"
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
                 placeholder="Enter tags (e.g., festive, holiday)"
-                className="w-full bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-300">Description</Label>
+            <Label htmlFor="description" className="text-black">Description</Label>
             <Textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter campaign description"
-              className="w-full min-h-[100px] bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+              className="w-full min-h-[100px] border-gray-700/10  text-black placeholder:text-gray-400"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="triggerType" className="text-gray-300">
+              <Label htmlFor="triggerType" className="text-black">
                 Trigger Type
               </Label>
               <Input
                 id="triggerType"
                 value="QR"
                 disabled
-                className="w-full bg-[#1f2937] border-gray-800 text-white cursor-not-allowed opacity-70"
+                className="w-full  border-gray-700/10 text-black cursor-not-allowed opacity-70"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="numberOfCodes" className="text-gray-300">
+              <Label htmlFor="numberOfCodes" className="text-black">
                 Number of Codes <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -239,11 +239,11 @@ export default function CreateCampaignForm() {
                 onChange={handleChange}
                 placeholder="Enter number of codes"
                 required
-                className="w-full bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+                className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="qrStyle" className="text-gray-300">
+              <Label htmlFor="qrStyle" className="text-black">
                 QR Style <span className="text-red-500">*</span>
               </Label>
               <Select 
@@ -252,20 +252,20 @@ export default function CreateCampaignForm() {
               >
                 <SelectTrigger 
                   id="qrStyle"
-                  className="w-full bg-[#1f2937] border-gray-800 text-gray-100"
+                  className="w-full   text-black"
                 >
                   <SelectValue placeholder="Select QR style" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1f2937] border-gray-800">
-                  <SelectItem value="simple" className="text-gray-100">Simple</SelectItem>
-                  <SelectItem value="stylized" className="text-gray-100">Stylized</SelectItem>
+                <SelectContent className=" ">
+                  <SelectItem value="simple" className="text-black">Simple</SelectItem>
+                  <SelectItem value="stylized" className="text-black">Stylized</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="triggerText" className="text-gray-300">
+            <Label htmlFor="triggerText" className="text-black">
               Trigger Text <span className="text-red-500">*</span>
             </Label>
             <Textarea
@@ -275,7 +275,7 @@ export default function CreateCampaignForm() {
               onChange={handleChange}
               placeholder="Enter message template"
               required
-              className="w-full min-h-[80px] bg-[#1f2937] border-gray-800 text-gray-100 placeholder:text-gray-400"
+              className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
             />
           </div>
 

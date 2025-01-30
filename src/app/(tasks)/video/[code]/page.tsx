@@ -98,7 +98,8 @@ const VideoTask = () => {
     try {
       setIsSubmitting(true);
       setFormError("");
-
+       
+      console.log(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/complete-task`)
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/complete-task`,
         {

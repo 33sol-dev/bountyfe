@@ -86,7 +86,7 @@ const Page = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       {isLoading ? (
-        <div className="flex flex-col items-center space-y-4 text-white">
+        <div className="flex flex-col items-center space-y-4 text-black">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-lg font-medium">{status}</p>
         </div>
@@ -96,7 +96,7 @@ const Page = () => {
           <AlertDescription className="ml-2">{error}</AlertDescription>
         </Alert>
       ) : (
-        <div className="flex items-center space-x-2 text-white">
+        <div className="flex items-center space-x-2 text-black">
           <Loader2 className="h-6 w-6 animate-spin" />
           <p>{status}</p>
         </div>

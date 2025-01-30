@@ -7,7 +7,7 @@ const HeroSection = () => {
       <div className="container mx-auto px-6 py-16 max-w-7xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="flex-1 space-y-6">
-            <h1 className={`text-7xl md:text-7xl font-bold text-white font-bree`}>
+            <h1 className={`text-7xl md:text-7xl font-bold text-black font-bree`}>
               BOUNTY
             </h1>
             <p className="text-lg text-gray-600 max-w-xl">
