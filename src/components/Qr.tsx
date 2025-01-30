@@ -1,5 +1,6 @@
 "use client"
 
+//qr component
 import React, { useState, useEffect } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
