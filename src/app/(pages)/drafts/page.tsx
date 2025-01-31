@@ -196,12 +196,20 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
           ))}
         </div>
       </div>
-
+      
+      <div className="flex gap-4">
       <Link href={`/campaigns/${campaign.id}`}>
         <Button variant="default" className="w-full bg-black text-white">
           View Details
         </Button>
       </Link>
+      <Button
+        variant="outline"
+        className="bg-black text-white"
+      >
+        <Link href={`/drafts/${campaign.id}`}>Pay To Publish</Link>
+      </Button>
+      </div>
     </CardContent>
   </Card>
 );

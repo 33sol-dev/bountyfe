@@ -1,15 +1,16 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2, AlertCircle, CheckCircle2, Download, Lock } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import JSZip from "jszip";
-import qrcode from "qrcode";
-import { saveAs } from "file-saver";
+import JSZip from "jszip"
+import qrcode from "qrcode"
+import { saveAs } from "file-saver"
 
 interface Campaign {
   name: string
@@ -39,15 +40,12 @@ export default function PayoutPage() {
           return
         }
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => null)
@@ -78,43 +76,40 @@ export default function PayoutPage() {
 
   const getCampaignQrs = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
 
       if (!token) {
-        router.push("/sign-in");
-        return;
+        router.push("/sign-in")
+        return
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/get-campaign-codes`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ campaignId: id }),
-        }
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/get-campaign-codes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ campaignId: id }),
+      })
 
       if (!response.ok) {
-        throw new Error("Failed to fetch campaign QRs");
+        throw new Error("Failed to fetch campaign QRs")
       }
-      const zip = new JSZip();
-      const data = await response.json();
+      const zip = new JSZip()
+      const data = await response.json()
       const urls = data.codes.map(async (codeObj: any) => {
-        const qrDataUrl = await qrcode.toDataURL(codeObj.url);
-        const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "");
-        zip.file(`${codeObj.code}.png`, base64Data, { base64: true });
-      });
-      await Promise.all(urls);
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      saveAs(zipBlob, "campaign_qrcodes.zip");
+        const qrDataUrl = await qrcode.toDataURL(codeObj.url)
+        const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "")
+        zip.file(`${codeObj.code}.png`, base64Data, { base64: true })
+      })
+      await Promise.all(urls)
+      const zipBlob = await zip.generateAsync({ type: "blob" })
+      saveAs(zipBlob, "campaign_qrcodes.zip")
     } catch (err) {
-      console.error(err);
-      alert(err || "An error occurred while fetching the campaign QRs");
+      console.error(err)
+      alert(err || "An error occurred while fetching the campaign QRs")
     }
-  };
+  }
 
   const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,24 +140,18 @@ export default function PayoutPage() {
         return
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/publish`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ pin: payoutPin })
-        }
-      )
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/publish`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pin: payoutPin }),
+      })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
-        throw new Error(
-          errorData?.message || 
-          `Publishing failed with status: ${response.status}`
-        )
+        throw new Error(errorData?.message || `Publishing failed with status: ${response.status}`)
       }
 
       await response.json()
@@ -205,17 +194,13 @@ export default function PayoutPage() {
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center">
-          <h1 className="text-2xl font-medium tracking-tight text-gray-200">
-            Campaign Payout Verification
-          </h1>
+          <h1 className="text-2xl font-medium tracking-tight text-black">Campaign Payout Verification</h1>
         </div>
 
-        <Card className="bg-[#1e2128] border-[#2a2d35] shadow-xl">
+        <Card className="bg-white border-gray-200 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-gray-200">
-              {isPinCorrect ? "Publish Campaign Files" : "Enter Payout Pin"}
-            </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardTitle className="text-black">{isPinCorrect ? "Publish Campaign Files" : "Enter Payout Pin"}</CardTitle>
+            <CardDescription className="text-gray-600">
               {isPinCorrect
                 ? "Click publish to generate and download your campaign files"
                 : "Please enter the payout pin to access campaign files"}
@@ -225,14 +210,14 @@ export default function PayoutPage() {
             {!isPinCorrect ? (
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-white">{campaign.publishPin}</div>
+                  <div className="text-black">{campaign.publishPin}</div>
                   <div className="relative">
                     <Input
                       id="payoutPin"
                       type="password"
                       value={payoutPin}
                       onChange={(e) => setPayoutPin(e.target.value)}
-                      className="pl-10 bg-[#13151a] border-[#2a2d35] text-gray-200 placeholder-gray-500"
+                      className="pl-10 bg-white border-gray-300 text-black placeholder-gray-400"
                       placeholder="Enter your pin"
                       required
                     />
@@ -256,10 +241,10 @@ export default function PayoutPage() {
               </form>
             ) : (
               <div className="space-y-6">
-                <Alert className="bg-green-900/20 border-green-800">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <AlertTitle className="text-green-400">Success!</AlertTitle>
-                  <AlertDescription className="text-green-300">
+                <Alert className="bg-green-100 border-green-400">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-700">Success!</AlertTitle>
+                  <AlertDescription className="text-green-600">
                     Your payout pin has been verified successfully.
                   </AlertDescription>
                 </Alert>
@@ -289,3 +274,4 @@ export default function PayoutPage() {
     </div>
   )
 }
+

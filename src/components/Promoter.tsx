@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { MerchantDetailsForm } from './Personal-detail'
 
-export default function TaskForm() {
+export default function PromoterForm( { activeTab }: { activeTab: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')

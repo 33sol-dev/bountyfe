@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from 'next-auth/react'
+import { signOut, useSession } from "next-auth/react";
 
 const Sidebar = ({
   openSidebar,
@@ -13,7 +13,7 @@ const Sidebar = ({
   setOpenSidebar: (value: boolean) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: session } = useSession()
+  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
 
   const router = usePathname();
@@ -33,23 +33,23 @@ const Sidebar = ({
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/sign-in";  
-  }
+    window.location.href = "/sign-in";
+  };
 
   const handleLogout = async () => {
     try {
-      setIsLoading(true)
-      if (session?.user?.image?.includes('googleusercontent')) {
-        await signOut({ callbackUrl: '/sign-in' })
+      setIsLoading(true);
+      if (session?.user?.image?.includes("googleusercontent")) {
+        await signOut({ callbackUrl: "/sign-in" });
       } else {
-        logout()
+        logout();
       }
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error("Logout failed:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div
@@ -64,7 +64,18 @@ const Sidebar = ({
     >
       <div className="px-4 w-full flex-1 flex flex-col justify-between items-center text-black">
         <div className="w-full">
-          <nav className="flex-grow mt-16">
+          <div className="flex gap-4 text-xl text-center items-center">
+            <Image
+              src={"/images/logo.jpeg"}
+              height={60}
+              width={60}
+              alt="logo"
+              className="p-1"
+              ></Image>
+              {"BOUNTY"}
+          </div>
+
+          <nav className="flex-grow mt-10">
             {menuItems.map((item) => (
               <Link
                 href={item.href}
@@ -75,9 +86,10 @@ const Sidebar = ({
                   className={`
                     flex items-center p-3 h-12 box-border mb-2 gap-6 rounded-lg 
                     text-black cursor-pointer transition-colors duration-200
-                    ${router === item.href 
-                      ? "bg-gradient-to-r from-[#b3b3b3] to-[#b3b3b3]"
-                      : ""
+                    ${
+                      router === item.href
+                        ? "bg-gradient-to-r from-[#b3b3b3] to-[#b3b3b3]"
+                        : ""
                     }
                   `}
                 >
@@ -115,7 +127,7 @@ const Sidebar = ({
             <span className="text-sm">User Settings</span>
           </div>
         </Link>
-        
+
         <div
           className={`
             flex items-center p-3 h-12 mb-2 gap-6 rounded-lg 
@@ -127,12 +139,7 @@ const Sidebar = ({
             handleLogout();
           }}
         >
-          <Image
-            src="/svgs/logout.svg"
-            width={24}
-            height={24}
-            alt="Logout"
-          />
+          <Image src="/svgs/logout.svg" width={24} height={24} alt="Logout" />
           <span className="text-sm">Logout</span>
         </div>
       </div>

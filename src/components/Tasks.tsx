@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
 
-export default function TaskForm() {
+export default function TaskForm( { activeTab }: { activeTab: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -28,7 +28,7 @@ export default function TaskForm() {
     triggerText: '',
     qrStyle: 'simple',
     campaignType: '',
-    personDetails: null as { field1: string; field2: string; field3: string } | null,
+    campaignTemplate: "task",
   })
 
   useEffect(() => {
@@ -82,16 +82,10 @@ export default function TaskForm() {
       return
     }
 
-    if (formData.campaignType === 'digital-activation' && !formData.personDetails) {
-      setError('Person details are required for digital activation campaigns.')
-      setIsLoading(false)
-      return
-    }
-
     try {
       const payload = {
         ...formData,
-        companyId,
+        company : companyId,
         totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
         numberOfCodes: Number(formData.numberOfCodes),
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : []
@@ -124,7 +118,7 @@ export default function TaskForm() {
         triggerText: '',
         qrStyle: '',
         campaignType: '',
-        personDetails: null,
+        campaignTemplate: "task",
       })
 
       router.push('/campaigns')

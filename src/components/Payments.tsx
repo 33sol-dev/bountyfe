@@ -1,136 +1,151 @@
-"use client"
+"use client";
 
 //qr component
-import React, { useState, useEffect } from 'react'
-import { AlertCircle, Loader2 } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { useRouter } from "next/navigation"
-import Link from 'next/link'
+import React, { useState, useEffect } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-export default function TaskForm() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [companyId, setCompanyId] = useState<string | null>(null)
-  const [showPersonDetails, setShowPersonDetails] = useState(false)
+export default function PaymetnForm( { activeTab }: { activeTab: string }) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [showPersonDetails, setShowPersonDetails] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    totalAmount: '',
-    tags: '',
-    triggerType: 'QR',
-    numberOfCodes: '5000',
-    triggerText: '',
-    qrStyle: 'simple',
-    personDetails: null as { field1: string; field2: string; field3: string } | null,
-  })
+    name: "",
+    description: "",
+    totalAmount: "",
+    rewardAmount: "",
+    campaignTemplate: "product",
+    tags: "",
+    triggerType: "QR",
+    numberOfCodes: "5000",
+    triggerText: "",
+  });
 
   useEffect(() => {
-    const storedCompanyId = localStorage.getItem('companyId')
+    const storedCompanyId = localStorage.getItem("companyId");
     if (!storedCompanyId) {
-      setError('No company ID found. Please create a company first.')
+      setError("No company ID found. Please create a company first.");
       setTimeout(() => {
-        router.push('/create-company')
-      }, 2000)
-      return
+        router.push("/create-company");
+      }, 2000);
+      return;
     }
-    setCompanyId(storedCompanyId)
-  }, [router])
+    setCompanyId(storedCompanyId);
+  }, [router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+      rewardAmount: Math.floor(Number(formData.totalAmount) / Number(formData.numberOfCodes)).toString(),
+    }));
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleOpenPersonDetails = () => {
-    setShowPersonDetails(true)
-  }
+    setShowPersonDetails(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     if (!companyId) {
-      setError('Company ID is required. Please create a company first.')
-      setIsLoading(false)
-      return
+      setError("Company ID is required. Please create a company first.");
+      setIsLoading(false);
+      return;
     }
 
-    const requiredFields = ['name', 'numberOfCodes', 'triggerText', 'qrStyle']
-    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData])
-    
+    const requiredFields = ["name", "numberOfCodes", "triggerText"];
+    const missingFields = requiredFields.filter(
+      (field) => !formData[field as keyof typeof formData]
+    );
+    console.log("missingFields", missingFields);
+
     if (missingFields.length > 0) {
-      setError(`Required fields missing: ${missingFields.join(', ')}`)
-      setIsLoading(false)
-      return
+      setError(`Required fields missing: ${missingFields.join(", ")}`);
+      setIsLoading(false);
+      return;
     }
 
     try {
       const payload = {
         ...formData,
-        companyId,
-        totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
+        company : companyId,
+        totalAmount: formData.totalAmount
+          ? Number(formData.totalAmount)
+          : undefined,
         numberOfCodes: Number(formData.numberOfCodes),
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : []
-      }
+        tags: formData.tags
+          ? formData.tags.split(",").map((tag) => tag.trim())
+          : [],
+        rewardAmount: Number(formData.rewardAmount),
+      };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to create campaign')
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create campaign");
       }
 
-      const responseData = await response.json()
-      console.log('Campaign created successfully:', responseData)
+      const responseData = await response.json();
+      console.log("Campaign created successfully:", responseData);
 
       setFormData({
-        name: '',
-        description: '',
-        totalAmount: '',
-        tags: '',
-        triggerType: '',
-        numberOfCodes: '1000',
-        triggerText: '',
-        qrStyle: '',
-        personDetails: null,
-      })
+        name: "",
+        description: "",
+        totalAmount: "",
+        rewardAmount: "",
+        campaignTemplate: "product",
+        tags: "",
+        triggerType: "QR",
+        numberOfCodes: "5000",
+        triggerText: "",
+      });
 
-      router.push('/campaigns')
+      router.push("/campaigns");
     } catch (err: any) {
-      setError(err.message || "Failed to create campaign")
+      setError(err.message || "Failed to create campaign");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className=" p-4">
       <div className="max-w-7xl">
-        <h1 className="text-2xl font-bold mb-6 text-black">Create New Campaign</h1>
+        <h1 className="text-2xl font-bold mb-6 text-black">
+          Create New Campaign
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -148,7 +163,9 @@ export default function TaskForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalAmount" className="text-black">Total Amount</Label>
+              <Label htmlFor="totalAmount" className="text-black">
+                Total Amount
+              </Label>
               <Input
                 id="totalAmount"
                 type="number"
@@ -160,7 +177,9 @@ export default function TaskForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tags" className="text-black">Tags (comma-separated)</Label>
+              <Label htmlFor="tags" className="text-black">
+                Tags (comma-separated)
+              </Label>
               <Input
                 id="tags"
                 name="tags"
@@ -173,7 +192,9 @@ export default function TaskForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-black">Description</Label>
+            <Label htmlFor="description" className="text-black">
+              Description
+            </Label>
             <Textarea
               id="description"
               name="description"
@@ -212,24 +233,19 @@ export default function TaskForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="qrStyle" className="text-black">
-                QR Style <span className="text-red-500">*</span>
+              <Label htmlFor="rewardAmount" className="text-black">
+                Reward Amount <span className="text-red-500">*</span>
               </Label>
-              <Select 
-                value={formData.qrStyle} 
-                onValueChange={(value) => handleSelectChange('qrStyle', value)}
-              >
-                <SelectTrigger 
-                  id="qrStyle"
-                  className="w-full   text-black"
-                >
-                  <SelectValue placeholder="Select QR style" />
-                </SelectTrigger>
-                <SelectContent className=" ">
-                  <SelectItem value="simple" className="text-black">Simple</SelectItem>
-                  <SelectItem value="stylized" className="text-black">Stylized</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="rewardAmount"
+                type="number"
+                name="rewardAmount"
+                value={formData.rewardAmount}
+                onChange={handleChange}
+                placeholder="Enter number of codes"
+                required
+                className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
+              />
             </div>
           </div>
 
@@ -249,15 +265,18 @@ export default function TaskForm() {
           </div>
 
           {error && (
-            <div className='flex flex-col sm:flex-row gap-4 items-center'>
-              <Alert variant="destructive" className="bg-red-900/50 border-red-800 flex-grow">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <Alert
+                variant="destructive"
+                className="bg-red-900/50 border-red-800 flex-grow"
+              >
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-red-200">{error}</AlertDescription>
+                <AlertDescription className="text-red-200">
+                  {error}
+                </AlertDescription>
               </Alert>
-              <Button className='bg-white text-black w-full sm:w-auto'>
-                <Link href="/recharge">
-                  Recharge
-                </Link>
+              <Button className="bg-white text-black w-full sm:w-auto">
+                <Link href="/recharge">Recharge</Link>
               </Button>
             </div>
           )}
@@ -273,12 +292,11 @@ export default function TaskForm() {
                 <span>Creating Campaign...</span>
               </div>
             ) : (
-              'Create Campaign'
+              "Create Campaign"
             )}
           </Button>
         </form>
       </div>
     </div>
-  )
+  );
 }
-

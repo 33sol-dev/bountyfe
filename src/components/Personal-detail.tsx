@@ -87,4 +87,3 @@ export function MerchantDetailsForm({ onSubmit, onCancel }: MerchantDetailsFormP
     </div>
   )
 }
-
