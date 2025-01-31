@@ -11,9 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
-import { PersonDetailsForm } from './Personal-detail'
 
-export default function CreateCampaignForm() {
+export default function TaskForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -322,15 +321,7 @@ export default function CreateCampaignForm() {
           </Button>
         </form>
       </div>
-      {showPersonDetails && (
-        <PersonDetailsForm
-          onSubmit={(details) => {
-            setFormData(prev => ({ ...prev, personDetails: details }))
-            setShowPersonDetails(false)
-          }}
-          onCancel={() => setShowPersonDetails(false)}
-        />
-      )}
     </div>
   )
 }
+

@@ -1,48 +1,67 @@
 "use client"
 import React from 'react';
 import { QrCode, FileSpreadsheet } from 'lucide-react';
-import CreateCampaignForm from '@/components/Qr';
+import CreateCampaignForm from '@/components/Tasks';
 import CreateExcelCampaign from '@/components/Excel';
+import TaskForm from '@/components/Tasks';
+import Payments from '@/components/Payments';
+import Promoter from '@/components/Promoter';
 
 const SwitchComponent = () => {
-  const [activeTab, setActiveTab] = React.useState("qr");
+  const [activeTab, setActiveTab] = React.useState("payment");
   
   return (
     <div className="w-full max-w-7.3xl ">
       <div className="flex p-4 rounded-lg">
         <button
-          onClick={() => setActiveTab("qr")}
+          onClick={() => setActiveTab("payment")}
           className={`flex items-center gap-2 px-4 rounded-md text-base font-medium transition-colors ${
-            activeTab === "qr"
+            activeTab === "payment"
               ? "bg-gradient-to-r from-[#7371FC] to-[#A594F9] text-white"
-              : "text-gray-400 hover:text-white"
+              : "text-black hover:text-white"
           }`}
         >
           <QrCode size={20} />
-          QR
+          Payment
         </button>
         <button
-          onClick={() => setActiveTab("excel")}
+          onClick={() => setActiveTab("tasks")}
           className={`flex items-center gap-2 px-4 py-1 rounded-md text-base font-medium transition-colors ${
-            activeTab === "excel"
+            activeTab === "tasks"
               ? "bg-gradient-to-r from-[#7371FC] to-[#A594F9] text-white"
-              : "text-gray-400 hover:text-white"
+              : "text-black hover:text-white"
           }`}
         >
           <FileSpreadsheet size={20} />
-          Excel
+          Tasks
+        </button>
+        <button
+          onClick={() => setActiveTab("promoter")}
+          className={`flex items-center gap-2 px-4 py-1 rounded-md text-base font-medium transition-colors ${
+            activeTab === "promoter"
+              ? "bg-gradient-to-r from-[#7371FC] to-[#A594F9] text-white"
+              : "text-black hover:text-white"
+          }`}
+        >
+          <FileSpreadsheet size={20} />
+          Promoter
         </button>
       </div>
       
       <div className=" rounded-lg">
-        {activeTab === "qr" ? (
+        {activeTab === "payment" ? (
           <div className="text-gray-200">
-            <CreateCampaignForm />
+            <Payments />
+          </div>
+        ) : ( activeTab === "tasks" ? (
+          <div className="text-gray-200">
+            <TaskForm />
           </div>
         ) : (
           <div className="text-gray-200">
-            <CreateExcelCampaign />
+            <Promoter />
           </div>
+        )
         )}
       </div>
     </div>

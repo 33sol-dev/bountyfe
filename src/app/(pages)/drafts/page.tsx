@@ -1,49 +1,59 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, AlertCircle, DollarSign, Calendar, Tag, Plus } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from "next/link"
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  AlertCircle,
+  DollarSign,
+  Calendar,
+  Tag,
+  Plus,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
 
 interface Campaign {
-  id: string
-  name: string
-  description: string
-  totalAmount: number
-  tags: string[]
-  createdAt: string
-  status: string
+  id: string;
+  name: string;
+  description: string;
+  totalAmount: number;
+  tags: string[];
+  createdAt: string;
+  status: string;
 }
 
 const CampaignList = () => {
-  const router = useRouter()
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
         if (!token) {
-          router.push("/sign-in")
-          return
+          router.push("/sign-in");
+          return;
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        if (!response.ok) throw new Error("Failed to fetch campaigns")
+        if (!response.ok) throw new Error("Failed to fetch campaigns");
 
-        const data = await response.json()
+        const data = await response.json();
         setCampaigns(
           data.campaigns.map((c: any) => ({
             id: c._id,
@@ -53,24 +63,24 @@ const CampaignList = () => {
             tags: c.tags,
             createdAt: c.createdAt,
             status: c.status,
-          })),
-        )
+          }))
+        );
       } catch (err: any) {
-        setError(err.message || "An error occurred while fetching campaigns")
+        setError(err.message || "An error occurred while fetching campaigns");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchCampaigns()
-  }, [router])
+    fetchCampaigns();
+  }, [router]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 text-primary animate-spin" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -80,7 +90,7 @@ const CampaignList = () => {
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
-    )
+    );
   }
 
   return (
@@ -88,12 +98,14 @@ const CampaignList = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Campaigns</h1>
-          <p className="text-muted-foreground">Manage and track your campaign performance</p>
+          <p className="text-muted-foreground">
+            Manage and track your campaign performance
+          </p>
         </div>
-        <Button variant="outline" className="gap-2">
+        {/* <Button variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
           New Campaign
-        </Button>
+        </Button> */}
       </div>
 
       <Tabs defaultValue="all" className="w-full">
@@ -127,8 +139,8 @@ const CampaignList = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
 const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
   <Card className="border rounded-lg overflow-hidden">
@@ -140,7 +152,9 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
         </div>
         <span
           className={`px-2 py-1 text-xs rounded-full ${
-            campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            campaign.status === "Active"
+              ? "bg-green-50 text-green-700"
+              : "bg-red-50 text-red-700"
           }`}
         >
           {campaign.status}
@@ -160,7 +174,9 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
             <Calendar className="h-4 w-4" />
             <span className="text-sm">Created</span>
           </div>
-          <p className="text-sm">{new Date(campaign.createdAt).toLocaleDateString()}</p>
+          <p className="text-sm">
+            {new Date(campaign.createdAt).toLocaleDateString()}
+          </p>
         </div>
       </div>
 
@@ -171,19 +187,23 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
         </div>
         <div className="flex flex-wrap gap-2">
           {campaign.tags.map((tag, index) => (
-            <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs">
+            <span
+              key={index}
+              className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
+            >
               {tag}
             </span>
           ))}
         </div>
       </div>
 
-      <Button variant="default" className="w-full bg-black text-white">
-        View Details
-      </Button>
+      <Link href={`/campaigns/${campaign.id}`}>
+        <Button variant="default" className="w-full bg-black text-white">
+          View Details
+        </Button>
+      </Link>
     </CardContent>
   </Card>
-)
+);
 
-export default CampaignList
-
+export default CampaignList;

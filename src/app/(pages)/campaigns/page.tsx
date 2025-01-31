@@ -87,10 +87,12 @@ const CampaignList = () => {
               <h1 className="text-2xl font-semibold">Campaigns</h1>
               <p className="text-muted-foreground">Manage and track your campaign performance</p>
             </div>
-            <Button variant="outline" className="gap-2">
+            <Link href={"/campaigns/new"}>
+            <Button variant="outline" className="gap-2 bg-black text-white">
               <Plus className="h-4 w-4" />
               New Campaign
             </Button>
+            </Link>
           </div>
     
           <Tabs defaultValue="all" className="w-full">
@@ -174,10 +176,12 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
             ))}
           </div>
         </div>
-  
+        
+        <Link href={`/campaigns/${campaign.id}`}>
         <Button variant="default" className="w-full bg-black text-white">
           View Details
         </Button>
+        </Link>
       </CardContent>
     </Card>
 )
