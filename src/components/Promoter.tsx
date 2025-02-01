@@ -28,7 +28,8 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     numberOfCodes: '5000',
     triggerText: '',
     qrStyle: 'simple',
-    personDetails: null as { field1: string; field2: string; field3: string } | null,
+    campaignTemplate: "sampleGiveAway",
+    noOfSamples: '',
   })
 
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     try {
       const payload = {
         ...formData,
-        companyId,
+        company :companyId,
         totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
         numberOfCodes: Number(formData.numberOfCodes),
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : []
@@ -117,7 +118,8 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
         numberOfCodes: '1000',
         triggerText: '',
         qrStyle: '',
-        personDetails: null,
+        campaignTemplate: "sampleGiveAway",
+        noOfSamples: '',
       })
 
       router.push('/campaigns')
@@ -133,7 +135,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
       <div className="max-w-7xl">
         <h1 className="text-2xl font-bold mb-6 text-black">Create New Campaign</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-black">
                 Campaign Name <span className="text-red-500">*</span>
@@ -157,6 +159,18 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
                 value={formData.totalAmount}
                 onChange={handleChange}
                 placeholder="Enter total amount"
+                className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="totalAmount" className="text-black">Total Number Of Samples</Label>
+              <Input
+                id="noOfSamples"
+                type="number"
+                name="noOfSamples"
+                value={formData.noOfSamples}
+                onChange={handleChange}
+                placeholder="Enter total number of samples"
                 className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
               />
             </div>
@@ -248,7 +262,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
               className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
             />
           </div>
-
+{/* 
           <div className="space-y-2">
             <Button
               type="button"
@@ -257,7 +271,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
             >
               Add Merchant Details
             </Button>
-          </div>
+          </div> */}
 
 
           {error && (

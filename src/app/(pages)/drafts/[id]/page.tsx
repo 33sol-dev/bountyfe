@@ -1,6 +1,4 @@
-"use client"
-
-import type React from "react"
+'use client'
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2, AlertCircle, CheckCircle2, Download, Lock } from "lucide-react"
@@ -21,6 +19,12 @@ interface Campaign {
   _id: string
 }
 
+interface Merchant {
+  _id: string
+  merchantName: string
+  qrLink: string
+}
+
 interface QRCodeData {
   code: string
   url: string
@@ -31,6 +35,7 @@ export default function PayoutPage() {
   const router = useRouter()
   const { id } = useParams()
   const [campaign, setCampaign] = useState<Campaign | null>(null)
+  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [payoutPin, setPayoutPin] = useState("")
@@ -55,8 +60,7 @@ export default function PayoutPage() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null)
-          throw new Error(errorData?.message || `HTTP error! status: ${response.status}`)
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
@@ -65,8 +69,7 @@ export default function PayoutPage() {
           template: data.campaign.campaignTemplate,
         })
       } catch (err: any) {
-        console.error("Fetch campaign error:", err)
-        setError(err.message || "An error occurred while fetching the campaign")
+        setError(err.message || "Failed to fetch campaign")
       } finally {
         setIsLoading(false)
       }
@@ -77,6 +80,12 @@ export default function PayoutPage() {
     }
   }, [id, router])
 
+  const generateBountyCode = (merchantId: string) => {
+    const merchantSuffix = merchantId.slice(-4);
+    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `BOUNTY${merchantSuffix}${randomNum}`;
+  };
+
   const getTaskCampaignQrs = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -85,34 +94,52 @@ export default function PayoutPage() {
         return
       }
 
-      // For task campaigns, fetch merchant data
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/merchants`, {
+      // First, fetch all merchants for this campaign
+      const merchantsResponse = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch merchant data")
+      if (!merchantsResponse.ok) {
+        throw new Error("Failed to fetch merchants")
       }
 
-      const data = await response.json()
+      const merchantsData = await merchantsResponse.json()
       const zip = new JSZip()
 
-      // Generate QR codes for each merchant
-      const qrPromises = data.merchants.map(async (merchant: any) => {
-        const qrUrl = `${process.env.NEXT_PUBLIC_BOUNTY_URL}/qr?campaign=${id}&merchant=${merchant._id}`
-        const qrDataUrl = await qrcode.toDataURL(qrUrl)
+      const qrPromises = merchantsData.merchants.map(async (merchant: Merchant) => {
+        const merchantDetailResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/get-merchant/${merchant._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!merchantDetailResponse.ok) {
+          throw new Error(`Failed to fetch merchant details for ${merchant._id}`)
+        }
+
+        const merchantDetail = await merchantDetailResponse.json()
+
+        const bountyCode = generateBountyCode(merchant._id)
+        const videoUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/video/${bountyCode}`
+        
+        const qrDataUrl = await qrcode.toDataURL(videoUrl, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          width: 400
+        })
         
         const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "")
-        zip.file(`merchant_${merchant._id}.png`, base64Data, { base64: true })
+        zip.file(`${merchantDetail.merchant.merchantName}_${merchant._id}.png`, base64Data, { base64: true })
       })
 
       await Promise.all(qrPromises)
       const zipBlob = await zip.generateAsync({ type: "blob" })
       saveAs(zipBlob, `${campaign?.name || 'task_campaign'}_merchant_qrs.zip`)
-
     } catch (err) {
       console.error('Error generating task QR codes:', err)
       throw err
@@ -157,7 +184,6 @@ export default function PayoutPage() {
       await Promise.all(qrPromises)
       const zipBlob = await zip.generateAsync({ type: "blob" })
       saveAs(zipBlob, `${campaign?.name || 'product_campaign'}_qrcodes.zip`)
-
     } catch (err) {
       console.error('Error generating product QR codes:', err)
       throw err
@@ -167,13 +193,15 @@ export default function PayoutPage() {
   const getCampaignQrs = async () => {
     try {
       if (!campaign) return
-
+      
       switch (campaign.template) {
         case 'task':
           await getTaskCampaignQrs()
           break
-        case 'product':
         case 'sampleGiveAway':
+          await getTaskCampaignQrs()
+          break
+        case 'product':
           await getProductCampaignQrs()
           break
         default:
@@ -189,7 +217,7 @@ export default function PayoutPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setError("")
-
+    
     try {
       if (campaign && payoutPin === campaign.publishPin) {
         setIsPinCorrect(true)
@@ -206,7 +234,7 @@ export default function PayoutPage() {
   const handlePublish = async () => {
     setIsPublishing(true)
     setError("")
-
+    
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -224,15 +252,13 @@ export default function PayoutPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || `Publishing failed with status: ${response.status}`)
+        throw new Error(`Publishing failed with status: ${response.status}`)
       }
 
       await response.json()
       await getCampaignQrs()
     } catch (err: any) {
-      console.error("Publish error:", err)
-      setError(err.message || "An error occurred while publishing the campaign")
+      setError(err.message || "Failed to publish campaign")
     } finally {
       setIsPublishing(false)
     }
@@ -243,18 +269,6 @@ export default function PayoutPage() {
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
         <p className="text-lg text-gray-600">Loading payout details...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="container max-w-md mx-auto mt-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
       </div>
     )
   }
@@ -273,20 +287,31 @@ export default function PayoutPage() {
           </p>
         </div>
 
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <Card className="bg-white border-gray-200 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-black">{isPinCorrect ? "Publish Campaign Files" : "Enter Payout Pin"}</CardTitle>
+            <CardTitle className="text-black">
+              {isPinCorrect ? "Publish Campaign Files" : "Enter Payout Pin"}
+            </CardTitle>
             <CardDescription className="text-gray-600">
               {isPinCorrect
                 ? "Click publish to generate and download your campaign files"
                 : "Please enter the payout pin to access campaign files"}
             </CardDescription>
+            <div>{campaign.publishPin}</div>
           </CardHeader>
           <CardContent>
             {!isPinCorrect ? (
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-black font-medium mb-2">Payout Pin: {campaign.publishPin}</div>
+                  <div className="text-black font-medium mb-2">Payout Pin</div>
                   <div className="relative">
                     <Input
                       id="payoutPin"
@@ -324,7 +349,6 @@ export default function PayoutPage() {
                     Your payout pin has been verified successfully.
                   </AlertDescription>
                 </Alert>
-
                 <Button
                   onClick={handlePublish}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
