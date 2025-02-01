@@ -16,7 +16,7 @@ interface ApiResponse {
   merchant?: any;
 }
 
-export const MerchantForm: React.FC = () => {
+export default function MerchantForm()  {
   const initialFormState: FormData = {
     merchantName: "",
     upiId: "",
@@ -269,4 +269,3 @@ export const MerchantForm: React.FC = () => {
   );
 };
 
-export default MerchantForm;
