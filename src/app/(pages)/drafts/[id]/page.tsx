@@ -17,6 +17,14 @@ interface Campaign {
   publishPin: string
   reward_type: string
   zipUrl: string
+  template: string
+  _id: string
+}
+
+interface QRCodeData {
+  code: string
+  url: string
+  merchantId?: string
 }
 
 export default function PayoutPage() {
@@ -34,7 +42,6 @@ export default function PayoutPage() {
     const fetchCampaign = async () => {
       try {
         const token = localStorage.getItem("token")
-
         if (!token) {
           router.push("/sign-in")
           return
@@ -53,13 +60,9 @@ export default function PayoutPage() {
         }
 
         const data = await response.json()
-        const campaignData = data.campaign
-
         setCampaign({
-          name: campaignData.name,
-          publishPin: campaignData.publishPin,
-          reward_type: campaignData.reward_type,
-          zipUrl: campaignData.zipUrl,
+          ...data.campaign,
+          template: data.campaign.campaignTemplate,
         })
       } catch (err: any) {
         console.error("Fetch campaign error:", err)
@@ -74,10 +77,51 @@ export default function PayoutPage() {
     }
   }, [id, router])
 
-  const getCampaignQrs = async () => {
+  const getTaskCampaignQrs = async () => {
     try {
       const token = localStorage.getItem("token")
+      if (!token) {
+        router.push("/sign-in")
+        return
+      }
 
+      // For task campaigns, fetch merchant data
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/merchants`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch merchant data")
+      }
+
+      const data = await response.json()
+      const zip = new JSZip()
+
+      // Generate QR codes for each merchant
+      const qrPromises = data.merchants.map(async (merchant: any) => {
+        const qrUrl = `${process.env.NEXT_PUBLIC_BOUNTY_URL}/qr?campaign=${id}&merchant=${merchant._id}`
+        const qrDataUrl = await qrcode.toDataURL(qrUrl)
+        
+        const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "")
+        zip.file(`merchant_${merchant._id}.png`, base64Data, { base64: true })
+      })
+
+      await Promise.all(qrPromises)
+      const zipBlob = await zip.generateAsync({ type: "blob" })
+      saveAs(zipBlob, `${campaign?.name || 'task_campaign'}_merchant_qrs.zip`)
+
+    } catch (err) {
+      console.error('Error generating task QR codes:', err)
+      throw err
+    }
+  }
+
+  const getProductCampaignQrs = async () => {
+    try {
+      const token = localStorage.getItem("token")
       if (!token) {
         router.push("/sign-in")
         return
@@ -95,19 +139,49 @@ export default function PayoutPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch campaign QRs")
       }
-      const zip = new JSZip()
+
       const data = await response.json()
-      const urls = data.codes.map(async (codeObj: any) => {
-        const qrDataUrl = await qrcode.toDataURL(codeObj.url)
+      const zip = new JSZip()
+
+      const qrPromises = data.codes.map(async (codeObj: QRCodeData) => {
+        const qrDataUrl = await qrcode.toDataURL(codeObj.url, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          width: 400
+        })
+        
         const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "")
         zip.file(`${codeObj.code}.png`, base64Data, { base64: true })
       })
-      await Promise.all(urls)
+
+      await Promise.all(qrPromises)
       const zipBlob = await zip.generateAsync({ type: "blob" })
-      saveAs(zipBlob, "campaign_qrcodes.zip")
+      saveAs(zipBlob, `${campaign?.name || 'product_campaign'}_qrcodes.zip`)
+
     } catch (err) {
-      console.error(err)
-      alert(err || "An error occurred while fetching the campaign QRs")
+      console.error('Error generating product QR codes:', err)
+      throw err
+    }
+  }
+
+  const getCampaignQrs = async () => {
+    try {
+      if (!campaign) return
+
+      switch (campaign.template) {
+        case 'task':
+          await getTaskCampaignQrs()
+          break
+        case 'product':
+        case 'sampleGiveAway':
+          await getProductCampaignQrs()
+          break
+        default:
+          throw new Error(`Unsupported campaign template: ${campaign.template}`)
+      }
+    } catch (err) {
+      console.error('Error in getCampaignQrs:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred while generating QR codes')
     }
   }
 
@@ -155,8 +229,7 @@ export default function PayoutPage() {
       }
 
       await response.json()
-      // Remove isPublished state and directly call getCampaignQrs
-      getCampaignQrs()
+      await getCampaignQrs()
     } catch (err: any) {
       console.error("Publish error:", err)
       setError(err.message || "An error occurred while publishing the campaign")
@@ -195,6 +268,9 @@ export default function PayoutPage() {
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-2xl font-medium tracking-tight text-black">Campaign Payout Verification</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Campaign Type: {campaign.template.charAt(0).toUpperCase() + campaign.template.slice(1)}
+          </p>
         </div>
 
         <Card className="bg-white border-gray-200 shadow-xl">
@@ -210,7 +286,7 @@ export default function PayoutPage() {
             {!isPinCorrect ? (
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-black">{campaign.publishPin}</div>
+                  <div className="text-black font-medium mb-2">Payout Pin: {campaign.publishPin}</div>
                   <div className="relative">
                     <Input
                       id="payoutPin"
@@ -274,4 +350,3 @@ export default function PayoutPage() {
     </div>
   )
 }
-

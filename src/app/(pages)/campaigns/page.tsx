@@ -30,11 +30,12 @@ const CampaignList = () => {
     const fetchCampaigns = async () => {
       try {
         const token = localStorage.getItem("token")
+        const companyId = localStorage.getItem("companyId")
         if (!token) {
           router.push("/sign-in")
           return
         }
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns?companyId=${companyId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
