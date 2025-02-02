@@ -80,12 +80,6 @@ export default function PayoutPage() {
     }
   }, [id, router])
 
-  const generateBountyCode = (merchantId: string) => {
-    const merchantSuffix = merchantId.slice(-4);
-    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `BOUNTY${merchantSuffix}${randomNum}`;
-  };
-
   const getTaskCampaignQrs = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -94,7 +88,7 @@ export default function PayoutPage() {
         return
       }
 
-      // First, fetch all merchants for this campaign
+      // Fetch merchants for this campaign
       const merchantsResponse = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,32 +103,16 @@ export default function PayoutPage() {
       const merchantsData = await merchantsResponse.json()
       const zip = new JSZip()
 
+      // Generate QR codes for each merchant
       const qrPromises = merchantsData.merchants.map(async (merchant: Merchant) => {
-        const merchantDetailResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/get-merchant/${merchant._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (!merchantDetailResponse.ok) {
-          throw new Error(`Failed to fetch merchant details for ${merchant._id}`)
-        }
-
-        const merchantDetail = await merchantDetailResponse.json()
-
-        const bountyCode = generateBountyCode(merchant._id)
-        const videoUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/video/${bountyCode}`
-        
-        const qrDataUrl = await qrcode.toDataURL(videoUrl, {
+        const qrDataUrl = await qrcode.toDataURL(merchant.qrLink, {
           errorCorrectionLevel: 'H',
           margin: 1,
           width: 400
         })
         
         const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "")
-        zip.file(`${merchantDetail.merchant.merchantName}_${merchant._id}.png`, base64Data, { base64: true })
+        zip.file(`${merchant.merchantName}_${merchant._id}.png`, base64Data, { base64: true })
       })
 
       await Promise.all(qrPromises)
@@ -145,6 +123,7 @@ export default function PayoutPage() {
       throw err
     }
   }
+
 
   const getProductCampaignQrs = async () => {
     try {
@@ -198,7 +177,7 @@ export default function PayoutPage() {
         case 'task':
           await getTaskCampaignQrs()
           break
-        case 'sampleGiveAway':
+        case 'sample':
           await getTaskCampaignQrs()
           break
         case 'product':

@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -19,10 +19,24 @@ const videos = [
   },
 ]
 
-const VideoTask = () => {
-  const params = useParams()
-  const code = params?.code as string
+interface Campaign {
+  campaignTemplate: "task" | "sample"
+  company: string
+  createdAt: string
+  description: string
+  merchantRegistrationLink: string
+  name: string
+  publishPin: string
+  status: string
+  tags: string[]
+  totalAmount: number
+  updatedAt: string
+  _id: string
+}
 
+const VideoTask = () => {
+  const searchParams = useSearchParams()
+  const [campaignData, setCampaignData] = useState<Campaign | null>(null)
   const [currentVideo, setCurrentVideo] = useState(videos[Math.floor(Math.random() * videos.length)])
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -32,20 +46,14 @@ const VideoTask = () => {
   const [duration, setDuration] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCompletionForm, setShowCompletionForm] = useState(false)
+  const [showTaskDialog, setShowTaskDialog] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
 
   const [formData, setFormData] = useState({
-    code: code || "",
     phoneNo: "",
   })
   const [formError, setFormError] = useState("")
-
-  useEffect(() => {
-    if (code) {
-      setFormData((prev) => ({ ...prev, code }))
-    }
-  }, [code])
 
   useEffect(() => {
     const video = videoRef.current
@@ -78,27 +86,25 @@ const VideoTask = () => {
       setIsSubmitting(true)
       setFormError("")
 
-      console.log(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/complete-task`)
+      const campaignId = searchParams.get('campaign')
+      const merchantId = searchParams.get('merchant')
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/complete-task`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          code: formData.code,
           phoneNo: formData.phoneNo,
           videoId: currentVideo.id,
           completedAt: new Date().toISOString(),
           watchDuration: videoRef.current?.duration || 0,
+          campaignId,
+          merchantId
         }),
       })
 
       const data = await response.json()
-
-      if (data.message === "Invalid Code" || data.message === "Code Already Used") {
-        setFormError(data.message)
-        return
-      }
 
       if (!response.ok) {
         throw new Error("Failed to submit completion details")
@@ -108,17 +114,6 @@ const VideoTask = () => {
       setShowCompletionForm(false)
       setShowSuccessDialog(true)
 
-      // toast({
-      //   variant: "default",
-      //   className: "bg-green-600 text-white border-none",
-      //   description: (
-      //     <div className="flex items-center gap-2">
-      //       <CheckCircle className="h-5 w-5" />
-      //       <span>Payment successfully sent to {formData.upiId}</span>
-      //     </div>
-      //   ),
-      //   duration: 5000, // Toast will be visible for 5 seconds
-      // })
       if (completedVideos.length + 1 === videos.length) {
         return
       }
@@ -138,9 +133,45 @@ const VideoTask = () => {
     }))
   }
 
-  const handleVideoEnd = () => {
+  const handleVideoEnd = async () => {
+    console.log("Video ended - starting handleVideoEnd function")  // Debug log
+    
     setIsPlaying(false)
-    setShowCompletionForm(true)
+    const campaignId = searchParams.get('campaign')  
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) throw new Error('Failed to fetch campaign data')
+      
+      const data = await response.json()
+      const campaignData = data.campaign
+      console.log('Extracted campaign data:', campaignData) 
+      setCampaignData(campaignData)
+      console.log('Campaign data set to state') 
+      console.log('Campaign template type:', data.campaignTemplate)  
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        if (campaignData.campaignTemplate === 'task') {
+          setShowTaskDialog(true)
+        } else if (campaignData.campaignTemplate === 'sample') {
+          setShowCompletionForm(true)
+        } else {
+          console.log('Unknown campaign template:', campaignData.campaignTemplate)  
+        }
+      } catch (dialogError) {
+        console.error('Error showing dialog:', dialogError)  // Debug log
+      }
+      
+    } catch (error) {
+      console.error('Error in handleVideoEnd:', error)  // Debug log
+    }
   }
 
   const togglePlay = () => {
@@ -187,16 +218,6 @@ const VideoTask = () => {
   }
 
   const allVideosCompleted = completedVideos.length === videos.length
-
-  if (!code) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <Alert variant="destructive">
-          <AlertDescription>Invalid URL. No code provided.</AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -266,50 +287,46 @@ const VideoTask = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+      <Dialog 
+        open={showTaskDialog} 
+        onOpenChange={(open) => {
+          console.log('Task Dialog state changing to:', open)
+          setShowTaskDialog(open)
+        }}
+      >
         <DialogContent className="bg-white text-black border border-gray-200">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-500" />
-              Submission Successful
-            </DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-semibold">Task Completion</DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4">
-            <Alert className="bg-green-100 border-green-500">
-              <AlertDescription className="text-green-800">
-                Your submission has been successfully processed. Your rewards will be deposited shortly.
-              </AlertDescription>
-            </Alert>
-
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => setShowSuccessDialog(false)}
-            >
-              Close
-            </Button>
+            <p>Campaign Template: {campaignData?.campaignTemplate}</p>
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setShowTaskDialog(false)}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCompletionForm} onOpenChange={setShowCompletionForm}>
+      {/* Sample Campaign Dialog (Phone Number Form) */}
+      <Dialog 
+        open={showCompletionForm} 
+        onOpenChange={(open) => {
+          console.log('Completion Form Dialog state changing to:', open)
+          setShowCompletionForm(open)
+        }}
+      >
         <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl font-semibold">Complete the Form</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Code</Label>
-              <Input
-                id="code"
-                name="code"
-                value={formData.code}
-                readOnly
-                disabled
-                className="bg-gray-100 border-gray-300"
-              />
-            </div>
             <div>
               <Label htmlFor="phoneNo" className="block text-sm font-medium mb-1">
                 Phone Number
@@ -351,4 +368,3 @@ const VideoTask = () => {
 }
 
 export default VideoTask
-

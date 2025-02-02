@@ -36,9 +36,9 @@ const SwitchComponent = () => {
           Tasks
         </button>
         <button
-          onClick={() => setActiveTab("sampleGiveAway")}
+          onClick={() => setActiveTab("sample")}
           className={`flex items-center gap-2 px-4 py-1 rounded-md text-base font-medium transition-colors ${
-            activeTab === "sampleGiveAway"
+            activeTab === "sample"
               ? "bg-gradient-to-r from-[#7371FC] to-[#A594F9] text-white"
               : "text-black "
           }`}
@@ -57,7 +57,7 @@ const SwitchComponent = () => {
           <div className="text-gray-200">
             <TaskForm activeTab={activeTab} />
           </div>
-        ) : activeTab === "sampleGiveAway" ? (
+        ) : activeTab === "sample" ? (
           <div className="text-gray-200">
             <Promoter activeTab={activeTab}/>
           </div>

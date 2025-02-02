@@ -28,7 +28,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     numberOfCodes: '5000',
     triggerText: '',
     qrStyle: 'simple',
-    campaignTemplate: "sampleGiveAway",
+    campaignTemplate: "sample",
     noOfSamples: '',
   })
 
@@ -118,7 +118,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
         numberOfCodes: '1000',
         triggerText: '',
         qrStyle: '',
-        campaignTemplate: "sampleGiveAway",
+        campaignTemplate: "sample",
         noOfSamples: '',
       })
 

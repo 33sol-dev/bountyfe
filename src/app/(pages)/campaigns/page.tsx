@@ -150,10 +150,10 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <DollarSign className="h-4 w-4" />
+              
               <span className="text-sm">Total Amount</span>
             </div>
-            <p className="text-lg font-medium">${campaign.totalAmount}</p>
+            <p className="text-lg font-medium">Rs.{campaign.totalAmount}</p>
           </div>
           <div>
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
