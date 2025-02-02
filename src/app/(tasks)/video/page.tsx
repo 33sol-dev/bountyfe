@@ -85,29 +85,29 @@ const VideoTask = () => {
     try {
       setIsSubmitting(true)
       setFormError("")
-
-      const campaignId = searchParams.get('campaign')
+      
+      const campaignId = searchParams.get('campaign')  
       const merchantId = searchParams.get('merchant')
+      const viewerNumber = formData.phoneNo
+      const macAddress = "1suhfuojfpzsfhiauZsdp1sThohdd"
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/code/complete-task`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/process-task`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          phoneNo: formData.phoneNo,
-          videoId: currentVideo.id,
-          completedAt: new Date().toISOString(),
-          watchDuration: videoRef.current?.duration || 0,
-          campaignId,
-          merchantId
+          viewerNumber,
+          macAddress,
+          merchantId: merchantId,
+          campaignId: campaignId,
         }),
       })
-
-      const data = await response.json()
+      console.log(response)
 
       if (!response.ok) {
-        throw new Error("Failed to submit completion details")
+        throw new Error("Failed to process task")
       }
 
       setCompletedVideos((prev) => [...prev, currentVideo.id])
@@ -119,8 +119,8 @@ const VideoTask = () => {
       }
       selectRandomVideo()
     } catch (error) {
-      setFormError("Failed to submit completion details. Please try again.")
-      console.error("Error submitting completion:", error)
+      setFormError("Failed to process task. Please try again.")
+      console.error("Error processing task:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -134,7 +134,7 @@ const VideoTask = () => {
   }
 
   const handleVideoEnd = async () => {
-    console.log("Video ended - starting handleVideoEnd function")  // Debug log
+    console.log("Video ended - starting handleVideoEnd function")  
     
     setIsPlaying(false)
     const campaignId = searchParams.get('campaign')  
@@ -294,21 +294,45 @@ const VideoTask = () => {
           setShowTaskDialog(open)
         }}
       >
-        <DialogContent className="bg-white text-black border border-gray-200">
+        <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-semibold">Task Completion</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-semibold">Complete the Form</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
-            <p>Campaign Template: {campaignData?.campaignTemplate}</p>
-            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
-              <Button 
-                variant="outline" 
+            <div>
+              <Label htmlFor="phoneNo" className="block text-sm font-medium mb-1">
+                Phone Number
+              </Label>
+              <Input
+                id="phoneNo"
+                name="phoneNo"
+                type="text"
+                placeholder="Enter your phone number"
                 className="w-full"
-                onClick={() => setShowTaskDialog(false)}
-              >
-                Close
-              </Button>
+                value={formData.phoneNo}
+                onChange={handleInputChange}
+              />
             </div>
+
+            {formError && (
+              <Alert variant="destructive" className="bg-red-900/50 border-red-500">
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+            <Button
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+              onClick={handleFormSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowTaskDialog(false)}>
+              Cancel
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
