@@ -89,7 +89,9 @@ const VideoTask = () => {
       const campaignId = searchParams.get('campaign')  
       const merchantId = searchParams.get('merchant')
       const viewerNumber = formData.phoneNo
-      const macAddress = "1suhfuojfpzsfhiauZsdp1sThohdd"
+      const id = Math.random().toString(36).substring(7)
+      console.log(id)
+      const macAddress = id
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/process-task`, {
         method: "POST",
