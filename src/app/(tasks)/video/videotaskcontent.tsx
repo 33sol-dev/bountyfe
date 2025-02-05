@@ -14,7 +14,7 @@ import { CheckCircle, PlayCircle, PauseCircle, Volume2, Volume1, VolumeX } from 
 const videos = [
   {
     id: 1,
-    title: "Big Buck Bunny",
+    title: "Video Task",
     url: "https://www.w3schools.com/html/mov_bbb.mp4",
   },
 ]
@@ -32,6 +32,7 @@ interface Campaign {
   totalAmount: number
   updatedAt: string
   _id: string
+  taskUrl: string
 }
 
 const VideoTask = () => {
@@ -48,12 +49,47 @@ const VideoTask = () => {
   const [showCompletionForm, setShowCompletionForm] = useState(false)
   const [showTaskDialog, setShowTaskDialog] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoUrl, setVideoUrl] = useState<string>("")
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [formData, setFormData] = useState({
     phoneNo: "",
   })
   const [formError, setFormError] = useState("")
+
+  useEffect(() => {
+    const fetchCampaignData = async () => {
+      const campaignId = searchParams.get('campaign')
+      if (!campaignId) return
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) throw new Error('Failed to fetch campaign data')
+        
+        const data = await response.json()
+        const campaignData = data.campaign
+        setCampaignData(campaignData)
+        
+        // Set the video URL from campaign data
+        if (campaignData.taskUrl) {
+          setVideoUrl(campaignData.taskUrl)
+        }
+      } catch (error) {
+        console.error('Error fetching campaign data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCampaignData()
+  }, [searchParams])
 
   useEffect(() => {
     const video = videoRef.current
@@ -65,7 +101,7 @@ const VideoTask = () => {
         video.removeEventListener("loadedmetadata", () => {})
       }
     }
-  }, [currentVideo])
+  }, [videoUrl])
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -226,12 +262,14 @@ const VideoTask = () => {
       <Card className="w-full max-w-4xl bg-white border-gray-200">
         <CardContent className="p-0">
           <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-contain"
-              src={currentVideo.url}
-              onEnded={handleVideoEnd}
-            />
+          {videoUrl && (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-contain"
+                src={videoUrl}
+                onEnded={handleVideoEnd}
+              />
+            )}
 
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
               <div className="px-4 cursor-pointer" onClick={handleProgressClick}>

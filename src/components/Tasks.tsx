@@ -1,6 +1,5 @@
 "use client"
 
-//qr component
 import React, { useState, useEffect } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 export default function TaskForm( { activeTab }: { activeTab: string }) {
   const router = useRouter()
@@ -18,6 +18,9 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
   const [error, setError] = useState('')
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [showPersonDetails, setShowPersonDetails] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -29,6 +32,15 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
     qrStyle: 'simple',
     campaignType: '',
     campaignTemplate: "task",
+    taskUrl: ''
+  })
+  
+  const s3Client = new S3Client({
+    region: process.env.NEXT_PUBLIC_AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || ''
+    }
   })
 
   useEffect(() => {
@@ -50,6 +62,7 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
       [name]: value
     }))
   }
+  
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -61,6 +74,66 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
   const handleOpenPersonDetails = () => {
     setShowPersonDetails(true)
   }
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Video file size must be less than 10MB')
+        return
+      }
+      if (!file.type.startsWith('video/')) {
+        setError('Please select a valid video file')
+        return
+      }
+      setSelectedVideo(file)
+      setError('')
+    }
+  }
+
+  const uploadVideo = async () => {
+    if (!selectedVideo) return null
+    setIsUploading(true)
+    setError('')
+    
+    try {
+      console.log('Starting video upload...')
+      
+      if (!process.env.NEXT_PUBLIC_AWS_BUCKET_NAME) {
+        throw new Error('AWS bucket name is not configured')
+      }
+      if (!process.env.NEXT_PUBLIC_AWS_REGION) {
+        throw new Error('AWS region is not configured')
+      }
+
+      const fileName = `videos/${companyId}/${Date.now()}-${selectedVideo.name}`
+      console.log('Uploading to:', fileName)
+
+      const fileBuffer = await selectedVideo.arrayBuffer();
+      const command = new PutObjectCommand({
+        Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME,
+        Key: fileName,
+        Body: Buffer.from(fileBuffer),
+        ContentType: selectedVideo.type
+      })
+
+      console.log('Sending to S3...')
+      await s3Client.send(command)
+      console.log('Upload successful!')
+      
+      const videoUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${fileName}`
+      console.log('Video URL:', videoUrl)
+      
+      return videoUrl
+    } catch (err: any) {
+      console.error('Upload error:', err)
+      setError(`Failed to upload video: ${err.message}`)
+      return null
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -83,12 +156,23 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
     }
 
     try {
+      let videoUrl = null
+      if (selectedVideo) {
+        videoUrl = await uploadVideo()
+        if (!videoUrl) {
+          setError('Failed to upload video')
+          setIsLoading(false)
+          return
+        }
+      }
+
       const payload = {
         ...formData,
         company : companyId,
         totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
         numberOfCodes: Number(formData.numberOfCodes),
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : []
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
+        taskUrl: videoUrl || formData.taskUrl
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/create`, {
@@ -119,6 +203,7 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
         qrStyle: '',
         campaignType: '',
         campaignTemplate: "task",
+        taskUrl: ''
       })
 
       router.push('/campaigns')
@@ -282,6 +367,32 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
               >
                 Add Personal Details
               </Button>
+            </div>
+          )}
+
+          {formData.campaignType === 'video' && (
+            <div className="space-y-2">
+              <Label htmlFor="video" className="text-black">
+                Upload Video <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="video"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoChange}
+                  className="w-full border-gray-700/10 text-black"
+                />
+                {isUploading && (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">
+                Maximum file size: 10MB. Supported formats: MP4, WebM
+              </p>
             </div>
           )}
 

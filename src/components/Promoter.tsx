@@ -12,13 +12,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { MerchantDetailsForm } from './Personal-detail'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
-export default function PromoterForm( { activeTab }: { activeTab: string }) {
+export default function PromoterForm({ activeTab }: { activeTab: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [showPersonDetails, setShowPersonDetails] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -30,7 +34,18 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     qrStyle: 'simple',
     campaignTemplate: "sample",
     noOfSamples: '',
+    campaignType: '',
+    taskUrl: ''
   })
+
+  const s3Client = new S3Client({
+    region: process.env.NEXT_PUBLIC_AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || ''
+    }
+  })
+
 
   useEffect(() => {
     const storedCompanyId = localStorage.getItem('companyId')
@@ -63,6 +78,65 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     setShowPersonDetails(true)
   }
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Video file size must be less than 10MB')
+        return
+      }
+      if (!file.type.startsWith('video/')) {
+        setError('Please select a valid video file')
+        return
+      }
+      setSelectedVideo(file)
+      setError('')
+    }
+  }
+
+  const uploadVideo = async () => {
+    if (!selectedVideo) return null
+    setIsUploading(true)
+    setError('')
+
+    try {
+      console.log('Starting video upload...')
+
+      if (!process.env.NEXT_PUBLIC_AWS_BUCKET_NAME) {
+        throw new Error('AWS bucket name is not configured')
+      }
+      if (!process.env.NEXT_PUBLIC_AWS_REGION) {
+        throw new Error('AWS region is not configured')
+      }
+
+      const fileName = `videos/${companyId}/${Date.now()}-${selectedVideo.name}`
+      console.log('Uploading to:', fileName)
+
+      const fileBuffer = await selectedVideo.arrayBuffer();
+      const command = new PutObjectCommand({
+        Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME,
+        Key: fileName,
+        Body: Buffer.from(fileBuffer),
+        ContentType: selectedVideo.type
+      })
+
+      console.log('Sending to S3...')
+      await s3Client.send(command)
+      console.log('Upload successful!')
+
+      const videoUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${fileName}`
+      console.log('Video URL:', videoUrl)
+
+      return videoUrl
+    } catch (err: any) {
+      console.error('Upload error:', err)
+      setError(`Failed to upload video: ${err.message}`)
+      return null
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -74,9 +148,19 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
       return
     }
 
+    let videoUrl = null
+    if (selectedVideo) {
+      videoUrl = await uploadVideo()
+      if (!videoUrl) {
+        setError('Failed to upload video')
+        setIsLoading(false)
+        return
+      }
+    }
+
     const requiredFields = ['name', 'numberOfCodes', 'triggerText', 'qrStyle']
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData])
-    
+
     if (missingFields.length > 0) {
       setError(`Required fields missing: ${missingFields.join(', ')}`)
       setIsLoading(false)
@@ -86,10 +170,11 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
     try {
       const payload = {
         ...formData,
-        company :companyId,
+        company: companyId,
         totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
         numberOfCodes: Number(formData.numberOfCodes),
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : []
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
+        taskUrl: videoUrl || formData.taskUrl
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/create`, {
@@ -120,6 +205,8 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
         qrStyle: '',
         campaignTemplate: "sample",
         noOfSamples: '',
+        campaignType: '',
+        taskUrl: ''
       })
 
       router.push('/campaigns')
@@ -151,16 +238,27 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="totalAmount" className="text-black">Total Amount</Label>
-              <Input
-                id="totalAmount"
-                type="number"
-                name="totalAmount"
-                value={formData.totalAmount}
-                onChange={handleChange}
-                placeholder="Enter total amount"
-                className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
-              />
+              <Label htmlFor="campaignType" className="text-black">
+                Campaign Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.campaignType}
+                onValueChange={(value) => handleSelectChange('campaignType', value)}
+              >
+                <SelectTrigger
+                  id="campaignType"
+                  className="w-full border-gray-700/10  text-black"
+                >
+                  <SelectValue placeholder="Select campaign type" />
+                </SelectTrigger>
+                <SelectContent className=" ">
+                  <SelectItem value="award" className="text-black">Award</SelectItem>
+                  <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem>
+                  <SelectItem value="social_media" className="text-black">Social Media</SelectItem>
+                  <SelectItem value="video" className="text-black">Video</SelectItem>
+                  <SelectItem value="location_sharing" className="text-black">Location Sharing</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="totalAmount" className="text-black">Total Number Of Samples</Label>
@@ -230,11 +328,11 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
               <Label htmlFor="qrStyle" className="text-black">
                 QR Style <span className="text-red-500">*</span>
               </Label>
-              <Select 
-                value={formData.qrStyle} 
+              <Select
+                value={formData.qrStyle}
                 onValueChange={(value) => handleSelectChange('qrStyle', value)}
               >
-                <SelectTrigger 
+                <SelectTrigger
                   id="qrStyle"
                   className="w-full   text-black"
                 >
@@ -262,7 +360,7 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
               className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
             />
           </div>
-{/* 
+          {/* 
           <div className="space-y-2">
             <Button
               type="button"
@@ -272,6 +370,31 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
               Add Merchant Details
             </Button>
           </div> */}
+          {formData.campaignType === 'video' && (
+            <div className="space-y-2">
+              <Label htmlFor="video" className="text-black">
+                Upload Video <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="video"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoChange}
+                  className="w-full border-gray-700/10 text-black"
+                />
+                {isUploading && (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">
+                Maximum file size: 10MB. Supported formats: MP4, WebM
+              </p>
+            </div>
+          )}
 
 
           {error && (
@@ -306,10 +429,10 @@ export default function PromoterForm( { activeTab }: { activeTab: string }) {
       </div>
       {showPersonDetails && (
         <MerchantDetailsForm onSubmit={function (details: { merchantName: string; upiId: string; phoneNumber: string }): void {
-                  throw new Error('Function not implemented.')
-              } } onCancel={function (): void {
-                  throw new Error('Function not implemented.')
-              } } />
+          throw new Error('Function not implemented.')
+        }} onCancel={function (): void {
+          throw new Error('Function not implemented.')
+        }} />
       )}
     </div>
   )
