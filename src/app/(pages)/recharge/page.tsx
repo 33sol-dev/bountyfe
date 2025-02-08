@@ -6,7 +6,7 @@ import { Check, IndianRupee } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 interface Plan {
@@ -45,17 +45,12 @@ const PricingPlans: React.FC = () => {
   const [error, setError] = useState<string>("")
   const [companyId, setCompanyId] = useState<string>("")
   const [whatsappNumber, setWhatsappNumber] = useState<string>("")
-  const { toast } = useToast()
 
   useEffect(() => {
     const storedCompanyId = localStorage.getItem("companyId")
     if (!storedCompanyId) {
       setError("No company ID found. Please create a company first.")
-      toast({
-        title: "Error",
-        description: "No company ID found. Redirecting to company creation...",
-        variant: "destructive",
-      })
+      toast.error("No company ID found. Redirecting to company creation...")
       setTimeout(() => {
         router.push("/create-company")
       }, 2000)
@@ -109,20 +104,12 @@ const PricingPlans: React.FC = () => {
       }
 
       const responseData = await response.json()
-      toast({
-        title: "Success!",
-        description: `Successfully subscribed to ${planName} plan`,
-        variant: "default",
-      })
+      toast.success(`Successfully subscribed to ${planName} plan`)
       console.log("Payment Successful", responseData)
     } catch (err: any) {
       const errorMessage = err.message || "Failed to process payment"
       setError(errorMessage)
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast.error(errorMessage)
       console.error("Payment Error:", err)
     } finally {
       setLoading(null)

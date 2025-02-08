@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  AlertCircle,
-  DollarSign,
-  Calendar,
-  Tag,
-  Plus,
-} from "lucide-react";
+import { Loader2, AlertCircle, DollarSign, Calendar, Tag, Plus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,7 +29,7 @@ const CampaignList = () => {
     const fetchCampaigns = async () => {
       try {
         const token = localStorage.getItem("token");
-        const companyId = localStorage.getItem("companyId")
+        const companyId = localStorage.getItem("companyId");
         if (!token) {
           router.push("/sign-in");
           return;
@@ -76,55 +69,27 @@ const CampaignList = () => {
     fetchCampaigns();
   }, [router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive" className="m-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Campaigns</h1>
-          <p className="text-muted-foreground">
-            Manage and track your campaign performance
-          </p>
+  const renderCampaignContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="h-10 w-10 text-primary animate-spin" />
         </div>
-        {/* <Button variant="outline" className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Campaign
-        </Button> */}
-      </div>
+      );
+    }
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4 border-b rounded-none bg-transparent p-0 h-auto">
-          <TabsTrigger
-            value="all"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
-          >
-            All Campaigns ({campaigns.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="active"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
-          >
-            Active ({campaigns.filter((c) => c.status === "Active").length})
-          </TabsTrigger>
-        </TabsList>
+    if (error) {
+      return (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      );
+    }
 
+    return (
+      <>
         <TabsContent value="all" className="grid gap-4 md:grid-cols-2">
           {campaigns.map((campaign) => (
             <CampaignCard key={campaign.id} campaign={campaign} />
@@ -138,6 +103,38 @@ const CampaignList = () => {
               <CampaignCard key={campaign.id} campaign={campaign} />
             ))}
         </TabsContent>
+      </>
+    );
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Campaigns</h1>
+          <p className="text-muted-foreground">
+            Manage and track your campaign performance
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="mb-4 border-b rounded-none bg-transparent p-0 h-auto">
+          <TabsTrigger
+            value="all"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+          >
+            All Campaigns ({!isLoading && !error ? campaigns.length : 0})
+          </TabsTrigger>
+          <TabsTrigger
+            value="active"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+          >
+            Active ({!isLoading && !error ? campaigns.filter((c) => c.status === "Active").length : 0})
+          </TabsTrigger>
+        </TabsList>
+
+        {renderCampaignContent()}
       </Tabs>
     </div>
   );
@@ -198,17 +195,14 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
       </div>
       
       <div className="flex gap-4">
-      <Link href={`/campaigns/${campaign.id}`}>
-        <Button variant="default" className="w-full bg-black text-white">
-          View Details
+        <Link href={`/campaigns/${campaign.id}`}>
+          <Button variant="default" className="w-full bg-black text-white">
+            View Details
+          </Button>
+        </Link>
+        <Button variant="outline" className="bg-black text-white">
+          <Link href={`/drafts/${campaign.id}`}>Pay To Publish</Link>
         </Button>
-      </Link>
-      <Button
-        variant="outline"
-        className="bg-black text-white"
-      >
-        <Link href={`/drafts/${campaign.id}`}>Pay To Publish</Link>
-      </Button>
       </div>
     </CardContent>
   </Card>

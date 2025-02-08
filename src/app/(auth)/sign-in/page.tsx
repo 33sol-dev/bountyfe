@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { z } from "zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import Image from "next/image"
 import { LoadingButton } from "@/components/globals/buttons"
 import { signIn, useSession } from "next-auth/react"
@@ -24,7 +24,6 @@ type SignInFormData = z.infer<typeof SignInSchema>
 
 const Page: React.FC = () => {
   const router = useRouter()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const { data: session, status } = useSession()
   const [message, setMessage] = useState("")
@@ -81,11 +80,7 @@ const Page: React.FC = () => {
     } catch (error) {
       console.error("Error signing in with Google:", error)
       setMessage("Failed to sign in with Google")
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to sign in with Google",
-      })
+      toast.error("Failed to sign in with Google")
     } finally {
       setIsLoading(false)
     }
@@ -117,17 +112,14 @@ const Page: React.FC = () => {
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user))
         }
+        toast.success("Successfully logged in")
         router.replace(data.user?.hasCompany ? "/dashboard" : "/check-company")
       } else {
         throw new Error("Invalid response from server")
       }
     } catch (error) {
       console.error("Login error:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to login. Please try again.",
-      })
+      toast.error("Failed to login. Please try again.")
     } finally {
       setLoading(false)
     }

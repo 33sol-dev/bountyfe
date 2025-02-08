@@ -217,7 +217,6 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
   return (
     <div className=" p-4">
       <div className="max-w-7xl">
-        <h1 className="text-2xl font-bold mb-6 text-black">Create New Campaign</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">

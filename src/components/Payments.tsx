@@ -1,6 +1,5 @@
 "use client";
 
-//qr component
 import React, { useState, useEffect } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,19 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function PaymetnForm( { activeTab }: { activeTab: string }) {
+export default function PaymentForm({ activeTab }: { activeTab: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [showPersonDetails, setShowPersonDetails] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    totalAmount: "",
+    name: "Bounty Campaign 1",
     rewardAmount: "",
     campaignTemplate: "product",
-    tags: "",
     triggerType: "QR",
     numberOfCodes: "5000",
     triggerText: "",
@@ -48,7 +44,6 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      rewardAmount: Math.floor(Number(formData.totalAmount) / Number(formData.numberOfCodes)).toString(),
     }));
   };
 
@@ -74,11 +69,10 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
       return;
     }
 
-    const requiredFields = ["name", "numberOfCodes", "triggerText"];
+    const requiredFields = ["name", "numberOfCodes", "triggerText", "rewardAmount"];
     const missingFields = requiredFields.filter(
       (field) => !formData[field as keyof typeof formData]
     );
-    console.log("missingFields", missingFields);
 
     if (missingFields.length > 0) {
       setError(`Required fields missing: ${missingFields.join(", ")}`);
@@ -89,15 +83,9 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
     try {
       const payload = {
         ...formData,
-        company : companyId,
-        totalAmount: formData.totalAmount
-          ? Number(formData.totalAmount)
-          : undefined,
-        numberOfCodes: Number(formData.numberOfCodes),
-        tags: formData.tags
-          ? formData.tags.split(",").map((tag) => tag.trim())
-          : [],
+        company: companyId,
         rewardAmount: Number(formData.rewardAmount),
+        numberOfCodes: Number(formData.numberOfCodes),
       };
 
       const response = await fetch(
@@ -122,13 +110,10 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
 
       setFormData({
         name: "",
-        description: "",
-        totalAmount: "",
         rewardAmount: "",
         campaignTemplate: "product",
-        tags: "",
-        triggerType: "QR",
         numberOfCodes: "5000",
+        triggerType: "QR",
         triggerText: "",
       });
 
@@ -141,13 +126,10 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
   };
 
   return (
-    <div className=" p-4">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <div className="max-w-7xl">
-        <h1 className="text-2xl font-bold mb-6 text-black">
-          Create New Campaign
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="flex flex-col gap-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-black">
                 Campaign Name <span className="text-red-500">*</span>
@@ -159,79 +141,10 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
                 onChange={handleChange}
                 placeholder="Enter campaign name"
                 required
-                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="totalAmount" className="text-black">
-                Total Amount
-              </Label>
-              <Input
-                id="totalAmount"
-                type="number"
-                name="totalAmount"
-                value={formData.totalAmount}
-                onChange={handleChange}
-                placeholder="Enter total amount"
-                className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tags" className="text-black">
-                Tags (comma-separated)
-              </Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={formData.tags}
-                onChange={handleChange}
-                placeholder="Enter tags (e.g., festive, holiday)"
-                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-black">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter campaign description"
-              className="w-full min-h-[100px] border-gray-700/10  text-black placeholder:text-gray-400"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="triggerType" className="text-black">
-                Trigger Type
-              </Label>
-              <Input
-                id="triggerType"
-                value="QR"
-                disabled
-                className="w-full  border-gray-700/10 text-black cursor-not-allowed opacity-70"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="numberOfCodes" className="text-black">
-                Number of Codes <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="numberOfCodes"
-                type="number"
-                name="numberOfCodes"
-                value={formData.numberOfCodes}
-                onChange={handleChange}
-                placeholder="Enter number of codes"
-                required
                 className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="rewardAmount" className="text-black">
                 Reward Amount <span className="text-red-500">*</span>
@@ -241,6 +154,24 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
                 type="number"
                 name="rewardAmount"
                 value={formData.rewardAmount}
+                onChange={handleChange}
+                placeholder="Enter reward amount"
+                required
+                className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          <div className="w-full">
+            <div className="space-y-2">
+              <Label htmlFor="numberOfCodes" className="text-black">
+                Number of Codes <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="numberOfCodes"
+                type="number"
+                name="numberOfCodes"
+                value={formData.numberOfCodes}
                 onChange={handleChange}
                 placeholder="Enter number of codes"
                 required
@@ -260,20 +191,15 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
               onChange={handleChange}
               placeholder="Enter message template"
               required
-              className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
+              className="w-full min-h-[80px] border-gray-700/10 text-black placeholder:text-gray-400"
             />
           </div>
 
           {error && (
             <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <Alert
-                variant="destructive"
-                className="bg-red-900/50 border-red-800 flex-grow"
-              >
+              <Alert variant="destructive" className="bg-red-900/50 border-red-800 flex-grow">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-red-200">
-                  {error}
-                </AlertDescription>
+                <AlertDescription className="text-red-200">{error}</AlertDescription>
               </Alert>
               <Button className="bg-white text-black w-full sm:w-auto">
                 <Link href="/recharge">Recharge</Link>
@@ -283,7 +209,7 @@ export default function PaymetnForm( { activeTab }: { activeTab: string }) {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-2 px-4 rounded-lg"
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-3 px-6 rounded-lg"
             disabled={isLoading || !companyId}
           >
             {isLoading ? (

@@ -35,7 +35,7 @@ const SwitchComponent = () => {
           <FileSpreadsheet size={20} />
           Tasks
         </button>
-        <button
+        {/* <button
           onClick={() => setActiveTab("sample")}
           className={`flex items-center gap-2 px-4 py-1 rounded-md text-base font-medium transition-colors ${
             activeTab === "sample"
@@ -45,7 +45,7 @@ const SwitchComponent = () => {
         >
           <FileSpreadsheet size={20} />
           Promoter
-        </button>
+        </button> */}
       </div>
 
       <div className=" rounded-lg">
@@ -53,15 +53,16 @@ const SwitchComponent = () => {
           <div className="text-gray-200">
             <Payments activeTab={activeTab} />
           </div>
-        ) : activeTab === "task" ? (
+        ) : (
           <div className="text-gray-200">
             <TaskForm activeTab={activeTab} />
           </div>
-        ) : activeTab === "sample" ? (
-          <div className="text-gray-200">
-            <Promoter activeTab={activeTab}/>
-          </div>
-        ) : null}
+        )}
+        {/* // ) : activeTab === "sample" ? (
+        //   <div className="text-gray-200">
+        //     <Promoter activeTab={activeTab}/>
+        //   </div>
+        // ) : null} */}
       </div>
     </div>
   );

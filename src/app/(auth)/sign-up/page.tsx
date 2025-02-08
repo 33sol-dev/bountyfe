@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from 'sonner'
 import Image from "next/image"
 import clsx from "clsx"
 import { LoadingButton } from "@/components/globals/buttons"
@@ -29,7 +29,7 @@ type SignupFormData = z.infer<typeof SignupUserSchema>
 
 const Signup = () => {
   const router = useRouter()
-  const { toast } = useToast()
+
   const [loading, setLoading] = useState(false)
 
   const form = useForm<SignupFormData>({
@@ -81,14 +81,15 @@ const Signup = () => {
             "Please contact support if this persists.",
         )
       }
-      router.push("/sign-in")
+
+      toast.success('Account created successfully!')
+
+      setTimeout(() => {
+        router.push("/sign-in")
+      }, 1500)
     } catch (error) {
       console.error("Signup error:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
-      })
+      toast.error('An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
@@ -102,11 +103,7 @@ const Signup = () => {
       })
     } catch (error) {
       console.error("Google signin error:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Unable to sign in with Google. Please try again.",
-      })
+      toast.error("Unable to sign in with Google. Please try again.")
     } finally {
       setLoading(false)
     }
