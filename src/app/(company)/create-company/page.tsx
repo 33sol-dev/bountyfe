@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import Image from "next/image"
 
 interface CompanyFormData {
@@ -33,7 +33,6 @@ interface CompanyResponse {
 
 const NewCompanyForm = () => {
   const router = useRouter()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<CompanyFormData>(initialFormData)
   const [errors, setErrors] = useState<Partial<CompanyFormData>>({})
@@ -81,11 +80,7 @@ const NewCompanyForm = () => {
     }
 
     if (!token) {
-      toast({
-        title: "Error",
-        description: "Authentication required. Please sign in again.",
-        variant: "destructive",
-      })
+      toast.error("Authentication required. Please sign in again.")
       router.push("/sign-in")
       return
     }
@@ -112,20 +107,12 @@ const NewCompanyForm = () => {
 
       const responseData: CompanyResponse = await response.json()
       localStorage.setItem("companyId", responseData.companyId)
-
-      toast({
-        title: "Success",
-        description: "Company created successfully",
-        variant: "default",
-      })
+      
+      toast.success("Company created successfully")
 
       router.push("/dashboard")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create company. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("Company creation failed")
     } finally {
       setLoading(false)
     }
