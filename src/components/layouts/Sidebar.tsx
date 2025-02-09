@@ -32,6 +32,7 @@ const Sidebar = ({
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("companyId");
     window.location.href = "/sign-in";
   };
 
@@ -57,7 +58,7 @@ const Sidebar = ({
         transform ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 transition-transform duration-300 ease-in-out
         flex flex-col h-screen w-56  text-black py-4 shadow-lg mr-3
-        border-r-4 border-transparent
+        border-r-4 border-transparent  bg-white
       `}
       style={{ boxShadow: "3px 4px 35px 0px rgba(115, 113, 252, 0.10)" }}
     >
@@ -109,7 +110,7 @@ const Sidebar = ({
       <div className="w-full h-[1px] bg-[#FFFFFF1A] mb-2"></div>
 
       <div className="w-full px-4">
-        <Link href="/settings" onClick={() => setOpenSidebar(false)}>
+        {/* <Link href="/settings" onClick={() => setOpenSidebar(false)}>
           <div
             className={`
               flex items-center p-3 h-12 mb-2 gap-6 rounded-lg 
@@ -125,7 +126,7 @@ const Sidebar = ({
             />
             <span className="text-sm">User Settings</span>
           </div>
-        </Link>
+        </Link> */}
 
         <div
           className={`

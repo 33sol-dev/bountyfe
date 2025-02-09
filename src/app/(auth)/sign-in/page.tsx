@@ -44,14 +44,14 @@ const Page: React.FC = () => {
       })
 
       if (result?.error) {
-        throw new Error(result.error)
+        throw toast.error(result.error)
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000))
       const sessionToken = getNextAuthToken()
 
       if (!sessionToken) {
-        throw new Error("No session token available")
+        throw toast.error("No session token available")
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/auth/google`, {
@@ -75,7 +75,7 @@ const Page: React.FC = () => {
         }
         router.replace("/check-company")
       } else {
-        throw new Error(data.message || "Failed to process Google authentication")
+        throw toast.error(data.message || "Failed to process Google authentication")
       }
     } catch (error) {
       console.error("Error signing in with Google:", error)
@@ -106,16 +106,18 @@ const Page: React.FC = () => {
         body: JSON.stringify(values),
       })
       const data = await response.json()
+      console.log(data)
 
       if (data.token) {
         localStorage.setItem("token", data.token)
+        localStorage.setItem("companyId", data.companyId)
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user))
         }
         toast.success("Successfully logged in")
         router.replace(data.user?.hasCompany ? "/dashboard" : "/check-company")
       } else {
-        throw new Error("Invalid response from server")
+        throw toast.error("Invalid response from server")
       }
     } catch (error) {
       console.error("Login error:", error)

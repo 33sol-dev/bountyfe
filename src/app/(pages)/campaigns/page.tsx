@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
+import qrcode from "qrcode"
+
+interface CampaignCardProps {
+  campaign: Campaign
+  companyId?: string
+}
 
 interface Campaign {
   id: string
@@ -18,6 +25,10 @@ interface Campaign {
   tags: string[]
   createdAt: string
   status: string
+  campaignTemplate: string
+  taskType: string
+  company: string
+  merchantRegistrationLink : string
 }
 
 const CampaignList = () => {
@@ -41,21 +52,24 @@ const CampaignList = () => {
             "Content-Type": "application/json",
           },
         })
-        if (!response.ok) throw new Error("Failed to fetch campaigns")
+        if (!response.ok) throw toast.error("Failed to fetch campaigns")
         const data = await response.json()
+        console.log(data)
         setCampaigns(
           data.campaigns.map((c: any) => ({
             id: c._id,
             name: c.name,
             description: c.description,
             rewardAmount: c.rewardAmount,
-            tags: c.tags,
             createdAt: c.createdAt,
             status: c.status,
+            campaignTemplate: c.campaignTemplate,
+            taskType: c.taskType,
+            merchantRegistrationLink: c.merchantRegistrationLink,
           })),
         )
       } catch (err: any) {
-        setError(err.message || "An error occurred while fetching campaigns")
+        toast.error(err.message || "An error occurred while fetching campaigns")
       } finally {
         setIsLoading(false)
       }
@@ -138,8 +152,37 @@ const CampaignList = () => {
   )
 }
 
-const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
-  <Card className="border rounded-lg overflow-hidden">
+const CampaignCard = ({ campaign }: CampaignCardProps) => {
+  const companyId = localStorage.getItem("companyId")
+
+  const handleQRDownload = async () => {
+    try {
+      if (!campaign.merchantRegistrationLink) {
+        toast.error("No merchant registration link available")
+        return
+      }
+
+      const qrDataUrl = await qrcode.toDataURL(campaign.merchantRegistrationLink, {
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        width: 400
+      })
+
+      // Create temporary link and trigger download
+      const downloadLink = document.createElement("a")
+      downloadLink.href = qrDataUrl
+      downloadLink.download = `${campaign.name}_merchant_qr.png`
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+    } catch (err) {
+      console.error('Error generating QR code:', err)
+      toast.error("Failed to generate QR code")
+    }
+  }
+
+  return (
+    <Card className="border rounded-lg overflow-hidden">
     <CardContent className="p-6 space-y-6">
       <div className="flex justify-between items-start">
         <div>
@@ -158,7 +201,7 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <span className="text-sm">Total Amount</span>
+            <span className="text-sm">Reward Amount</span>
           </div>
           <p className="text-lg font-medium">Rs.{campaign.rewardAmount}</p>
         </div>
@@ -171,27 +214,39 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
         </div>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 text-muted-foreground mb-2">
-          <Tag className="h-4 w-4" />
-          <span className="text-sm">Tags</span>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <span className="text-sm">Campaign Template</span>
+          </div>
+          <p className="text-md">{campaign.campaignTemplate}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {campaign.tags.map((tag, index) => (
-            <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs">
-              {tag}
-            </span>
-          ))}
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <span className="text-md">Task Type</span>
+          </div>
+          <p className="text-sm">{campaign.taskType}</p>
         </div>
       </div>
+      
+      <div className="flex gap-3">          
+          <Button 
+            onClick={handleQRDownload}
+            variant="default" 
+            className="w-full bg-black text-white w-[17rem]"
+          >
+            Register Merchant QR
+          </Button>
 
       <Link href={`/campaigns/${campaign.id}`}>
-        <Button variant="default" className="w-full bg-black text-white">
+        <Button variant="default" className="w-full bg-black text-white w-[17rem]">
           View Details
         </Button>
       </Link>
+      </div>
+
     </CardContent>
   </Card>
-)
+)}
 
 export default CampaignList

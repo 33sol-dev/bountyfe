@@ -99,10 +99,10 @@ const NewCompanyForm = () => {
         if (response.status === 401) {
           localStorage.removeItem("token")
           router.push("/sign-in")
-          throw new Error("Session expired. Please sign in again.")
+          throw  toast.error("Session expired. Please sign in again.")
         }
         const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to create company")
+        throw  toast.error(errorData.message || "Failed to create company")
       }
 
       const responseData: CompanyResponse = await response.json()

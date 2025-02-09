@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 const Page = () => {
   const router = useRouter();
@@ -35,11 +36,13 @@ const Page = () => {
             }
           } else {
             setError("Failed to fetch company information");
+            toast.error("Failed to fetch company information");
             setTimeout(() => router.push("/create-company"), 2000);
           }
         } catch (error) {
           console.error("Error checking company:", error);
           setError("Network error. Please try again.");
+          toast.error("Network error. Please try again.");
           setTimeout(() => router.push("/create-company"), 2000);
         } finally {
           setIsLoading(false);

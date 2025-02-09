@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
-export default function TaskForm( { activeTab }: { activeTab: string }) {
+export default function TaskForm({ activeTab }: { activeTab: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,19 +22,15 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null)
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    totalAmount: '',
-    tags: '',
-    triggerType: 'QR',
-    numberOfCodes: '5000',
+    name: 'Bounty Campaign 1',
     triggerText: '',
-    qrStyle: 'simple',
-    campaignType: '',
     campaignTemplate: "task",
-    taskUrl: ''
+    taskUrl: '',
+    rewardAmount: '',
+    taskType: '',
+    noOfSamples: '',
   })
-  
+
   const s3Client = new S3Client({
     region: process.env.NEXT_PUBLIC_AWS_REGION,
     credentials: {
@@ -62,7 +58,7 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
       [name]: value
     }))
   }
-  
+
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -95,10 +91,10 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
     if (!selectedVideo) return null
     setIsUploading(true)
     setError('')
-    
+
     try {
       console.log('Starting video upload...')
-      
+
       if (!process.env.NEXT_PUBLIC_AWS_BUCKET_NAME) {
         throw new Error('AWS bucket name is not configured')
       }
@@ -120,10 +116,10 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
       console.log('Sending to S3...')
       await s3Client.send(command)
       console.log('Upload successful!')
-      
+
       const videoUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${fileName}`
       console.log('Video URL:', videoUrl)
-      
+
       return videoUrl
     } catch (err: any) {
       console.error('Upload error:', err)
@@ -146,9 +142,9 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
       return
     }
 
-    const requiredFields = ['name', 'numberOfCodes', 'triggerText', 'qrStyle', 'campaignType']
+    const requiredFields = ['name']
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData])
-    
+
     if (missingFields.length > 0) {
       setError(`Required fields missing: ${missingFields.join(', ')}`)
       setIsLoading(false)
@@ -168,10 +164,8 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
 
       const payload = {
         ...formData,
-        company : companyId,
-        totalAmount: formData.totalAmount ? Number(formData.totalAmount) : undefined,
-        numberOfCodes: Number(formData.numberOfCodes),
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
+        company: companyId,
+        rewardAmount: parseFloat(formData.rewardAmount),
         taskUrl: videoUrl || formData.taskUrl
       }
 
@@ -194,16 +188,12 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
 
       setFormData({
         name: '',
-        description: '',
-        totalAmount: '',
-        tags: '',
-        triggerType: '',
-        numberOfCodes: '1000',
         triggerText: '',
-        qrStyle: '',
-        campaignType: '',
         campaignTemplate: "task",
-        taskUrl: ''
+        taskUrl: '',
+        rewardAmount: '',
+        taskType: '',
+        noOfSamples: '',
       })
 
       router.push('/campaigns')
@@ -218,158 +208,100 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
     <div className=" p-4">
       <div className="max-w-7xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-black">
+              Campaign Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter campaign name"
+              required
+              className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-black">
-                Campaign Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter campaign name"
-                required
-                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="campaignType" className="text-black">
+              <Label htmlFor="campaignTemplate" className="text-black">
                 Campaign Type <span className="text-red-500">*</span>
               </Label>
-              <Select 
-                value={formData.campaignType} 
-                onValueChange={(value) => handleSelectChange('campaignType', value)}
+              <Select
+                value={formData.campaignTemplate}
+                onValueChange={(value) => handleSelectChange('campaignTemplate', value)}
               >
-                <SelectTrigger 
+                <SelectTrigger
                   id="campaignType"
-                  className="w-full border-gray-700/10  text-black"
+                  className="w-full border-gray-700/10 bg-white text-black"
                 >
                   <SelectValue placeholder="Select campaign type" />
                 </SelectTrigger>
                 <SelectContent className=" ">
                   <SelectItem value="award" className="text-black">Award</SelectItem>
                   <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="taskType" className="text-black">
+                Task Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.taskType}
+                onValueChange={(value) => handleSelectChange('taskType', value)}
+              >
+                <SelectTrigger
+                  id="campaignType"
+                  className="w-full border-gray-700/10  text-black"
+                >
+                  <SelectValue placeholder="Select campaign type" />
+                </SelectTrigger>
+                <SelectContent className=" ">
+                  {/* <SelectItem value="award" className="text-black">Award</SelectItem>
+                  <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem> */}
                   <SelectItem value="social_media" className="text-black">Social Media</SelectItem>
                   <SelectItem value="video" className="text-black">Video</SelectItem>
                   <SelectItem value="location_sharing" className="text-black">Location Sharing</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {formData.campaignTemplate === 'award' && (
             <div className="space-y-2">
-              <Label htmlFor="totalAmount" className="text-black">Total Amount</Label>
+              <Label htmlFor="rewardAmount" className="text-black">
+                Reward Amount <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="totalAmount"
+                id="rewardAmount"
                 type="number"
-                name="totalAmount"
-                value={formData.totalAmount}
+                name="rewardAmount"
+                value={formData.rewardAmount}
                 onChange={handleChange}
-                placeholder="Enter total amount"
+                placeholder="Enter reward amount"
+                required
                 className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="tags" className="text-black">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={formData.tags}
-                onChange={handleChange}
-                placeholder="Enter tags (e.g., festive, holiday)"
-                className="w-full  border-gray-700/10 text-black placeholder:text-gray-400"
-              />
-            </div>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-black">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter campaign description"
-              className="w-full min-h-[100px] border-gray-700/10  text-black placeholder:text-gray-400"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {formData.campaignTemplate === 'digital_activation' && (
             <div className="space-y-2">
-              <Label htmlFor="triggerType" className="text-black">
-                Trigger Type
-              </Label>
+              <Label htmlFor="totalAmount" className="text-black">Total Number Of Samples</Label>
               <Input
-                id="triggerType"
-                value="QR"
-                disabled
-                className="w-full  border-gray-700/10 text-black cursor-not-allowed opacity-70"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="numberOfCodes" className="text-black">
-                Number of Codes <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="numberOfCodes"
+                id="noOfSamples"
                 type="number"
-                name="numberOfCodes"
-                value={formData.numberOfCodes}
+                name="noOfSamples"
+                value={formData.noOfSamples}
                 onChange={handleChange}
-                placeholder="Enter number of codes"
-                required
-                className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
+                placeholder="Enter total number of samples"
+                className="w-full border-gray-700/10  text-black placeholder:text-gray-400"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="qrStyle" className="text-black">
-                QR Style <span className="text-red-500">*</span>
-              </Label>
-              <Select 
-                value={formData.qrStyle} 
-                onValueChange={(value) => handleSelectChange('qrStyle', value)}
-              >
-                <SelectTrigger 
-                  id="qrStyle"
-                  className="w-full   text-black"
-                >
-                  <SelectValue placeholder="Select QR style" />
-                </SelectTrigger>
-                <SelectContent className=" ">
-                  <SelectItem value="simple" className="text-black">Simple</SelectItem>
-                  <SelectItem value="stylized" className="text-black">Stylized</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="triggerText" className="text-black">
-              Trigger Text <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="triggerText"
-              name="triggerText"
-              value={formData.triggerText}
-              onChange={handleChange}
-              placeholder="Enter message template"
-              required
-              className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
-            />
-          </div>
-
-          {formData.campaignType === 'digital_activation' && (
-            <div className="space-y-2">
-              <Button
-                type="button"
-                onClick={handleOpenPersonDetails}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Add Personal Details
-              </Button>
             </div>
           )}
 
-          {formData.campaignType === 'video' && (
+          {formData.taskType === 'video' && (
             <div className="space-y-2">
               <Label htmlFor="video" className="text-black">
                 Upload Video <span className="text-red-500">*</span>
@@ -394,6 +326,21 @@ export default function TaskForm( { activeTab }: { activeTab: string }) {
               </p>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="triggerText" className="text-black">
+              Trigger Text <span className="text-red-500">*</span>
+            </Label>
+            <Textarea
+              id="triggerText"
+              name="triggerText"
+              value={formData.triggerText}
+              onChange={handleChange}
+              placeholder="Enter message template"
+              required
+              className="w-full min-h-[80px] border-gray-700/10  text-black placeholder:text-gray-400"
+            />
+          </div>
 
           {error && (
             <div className='flex flex-col sm:flex-row gap-4 items-center'>

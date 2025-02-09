@@ -1,4 +1,5 @@
 "use client"
+
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CheckCircle, PlayCircle, PauseCircle, Volume2, Volume1, VolumeX } from "lucide-react"
 
+// Default video if no campaign video is provided
 const videos = [
   {
     id: 1,
@@ -19,8 +21,9 @@ const videos = [
   },
 ]
 
+// Campaign interface defining the structure of campaign data
 interface Campaign {
-  campaignTemplate: "task" | "sample"
+  campaignTemplate: "award" | "digital_activation"
   company: string
   createdAt: string
   description: string
@@ -37,8 +40,10 @@ interface Campaign {
 
 const VideoTask = () => {
   const searchParams = useSearchParams()
+  
+  // State management
   const [campaignData, setCampaignData] = useState<Campaign | null>(null)
-  const [currentVideo, setCurrentVideo] = useState(videos[Math.floor(Math.random() * videos.length)])
+  const [currentVideo, setCurrentVideo] = useState(videos[0])
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [volume, setVolume] = useState(1)
@@ -48,15 +53,15 @@ const VideoTask = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCompletionForm, setShowCompletionForm] = useState(false)
   const [showTaskDialog, setShowTaskDialog] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const [videoUrl, setVideoUrl] = useState<string>("")
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
+  const [formError, setFormError] = useState("")
   const [formData, setFormData] = useState({
     phoneNo: "",
   })
-  const [formError, setFormError] = useState("")
+
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fetchCampaignData = async () => {
@@ -74,12 +79,10 @@ const VideoTask = () => {
         if (!response.ok) throw new Error('Failed to fetch campaign data')
         
         const data = await response.json()
-        const campaignData = data.campaign
-        setCampaignData(campaignData)
+        setCampaignData(data.campaign)
         
-        // Set the video URL from campaign data
-        if (campaignData.taskUrl) {
-          setVideoUrl(campaignData.taskUrl)
+        if (data.campaign.taskUrl) {
+          setVideoUrl(data.campaign.taskUrl)
         }
       } catch (error) {
         console.error('Error fetching campaign data:', error)
@@ -93,23 +96,26 @@ const VideoTask = () => {
 
   useEffect(() => {
     const video = videoRef.current
-    if (video) {
-      video.addEventListener("timeupdate", handleTimeUpdate)
-      video.addEventListener("loadedmetadata", () => setDuration(video.duration))
-      return () => {
-        video.removeEventListener("timeupdate", handleTimeUpdate)
-        video.removeEventListener("loadedmetadata", () => {})
-      }
+    if (!video) return
+
+    const handleTimeUpdate = () => {
+      const progress = (video.currentTime / video.duration) * 100
+      setProgress(progress)
+      setCurrentTime(video.currentTime)
+    }
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration)
+    }
+
+    video.addEventListener("timeupdate", handleTimeUpdate)
+    video.addEventListener("loadedmetadata", handleLoadedMetadata)
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate)
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata)
     }
   }, [videoUrl])
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100
-      setProgress(progress)
-      setCurrentTime(videoRef.current.currentTime)
-    }
-  }
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
@@ -125,9 +131,7 @@ const VideoTask = () => {
       const campaignId = searchParams.get('campaign')  
       const merchantId = searchParams.get('merchant')
       const viewerNumber = formData.phoneNo
-      const id = Math.random().toString(36).substring(7)
-      console.log(id)
-      const macAddress = id
+      const macAddress = Math.random().toString(36).substring(7)
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/process-task`, {
         method: "POST",
@@ -138,11 +142,10 @@ const VideoTask = () => {
         body: JSON.stringify({
           viewerNumber,
           macAddress,
-          merchantId: merchantId,
-          campaignId: campaignId,
+          merchantId,
+          campaignId,
         }),
       })
-      console.log(response)
 
       if (!response.ok) {
         throw new Error("Failed to process task")
@@ -150,17 +153,27 @@ const VideoTask = () => {
 
       setCompletedVideos((prev) => [...prev, currentVideo.id])
       setShowCompletionForm(false)
+      setShowTaskDialog(false)
       setShowSuccessDialog(true)
 
-      if (completedVideos.length + 1 === videos.length) {
-        return
-      }
-      selectRandomVideo()
     } catch (error) {
       setFormError("Failed to process task. Please try again.")
       console.error("Error processing task:", error)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleVideoEnd = async () => {
+    setIsPlaying(false)
+    
+    if (!campaignData) return
+    if (campaignData.campaignTemplate === 'award') {
+      setShowTaskDialog(true)
+      setShowCompletionForm(false)
+    } else if (campaignData.campaignTemplate === 'digital_activation') {
+      setShowTaskDialog(false)
+      setShowCompletionForm(true)
     }
   }
 
@@ -171,98 +184,47 @@ const VideoTask = () => {
     }))
   }
 
-  const handleVideoEnd = async () => {
-    console.log("Video ended - starting handleVideoEnd function")  
-    
-    setIsPlaying(false)
-    const campaignId = searchParams.get('campaign')  
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaignId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) throw new Error('Failed to fetch campaign data')
-      
-      const data = await response.json()
-      const campaignData = data.campaign
-      console.log('Extracted campaign data:', campaignData) 
-      setCampaignData(campaignData)
-      console.log('Campaign data set to state') 
-      console.log('Campaign template type:', data.campaignTemplate)  
-
-      try {
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        if (campaignData.campaignTemplate === 'task') {
-          setShowTaskDialog(true)
-        } else if (campaignData.campaignTemplate === 'sample') {
-          setShowCompletionForm(true)
-        } else {
-          console.log('Unknown campaign template:', campaignData.campaignTemplate)  
-        }
-      } catch (dialogError) {
-        console.error('Error showing dialog:', dialogError)  // Debug log
-      }
-      
-    } catch (error) {
-      console.error('Error in handleVideoEnd:', error)  // Debug log
-    }
-  }
-
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
+    if (!videoRef.current) return
+    
+    if (isPlaying) {
+      videoRef.current.pause()
+    } else {
+      videoRef.current.play()
     }
+    setIsPlaying(!isPlaying)
   }
 
   const toggleVolume = () => {
-    if (videoRef.current) {
-      const newVolume = volume === 0 ? 1 : 0
-      videoRef.current.volume = newVolume
-      setVolume(newVolume)
-    }
-  }
-
-  const selectRandomVideo = () => {
-    const unwatchedVideos = videos.filter((video) => !completedVideos.includes(video.id))
-    if (unwatchedVideos.length === 0) {
-      setCompletedVideos([])
-      setCurrentVideo(videos[Math.floor(Math.random() * videos.length)])
-    } else {
-      const randomVideo = unwatchedVideos[Math.floor(Math.random() * unwatchedVideos.length)]
-      setCurrentVideo(randomVideo)
-    }
-    setProgress(0)
-    setIsPlaying(false)
+    if (!videoRef.current) return
+    
+    const newVolume = volume === 0 ? 1 : 0
+    videoRef.current.volume = newVolume
+    setVolume(newVolume)
   }
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!videoRef.current) return
+
     const progressBar = e.currentTarget
     const clickPosition = e.clientX - progressBar.getBoundingClientRect().left
     const percentageClicked = (clickPosition / progressBar.offsetWidth) * 100
-    if (videoRef.current) {
-      const newTime = (percentageClicked / 100) * videoRef.current.duration
-      videoRef.current.currentTime = newTime
-      setProgress(percentageClicked)
-    }
+    const newTime = (percentageClicked / 100) * videoRef.current.duration
+    
+    videoRef.current.currentTime = newTime
+    setProgress(percentageClicked)
   }
 
-  const allVideosCompleted = completedVideos.length === videos.length
+  if (isLoading) {
+    return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl bg-white border-gray-200">
         <CardContent className="p-0">
-          <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
-          {videoUrl && (
+          <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden group">
+            {videoUrl && (
               <video
                 ref={videoRef}
                 className="w-full h-full object-contain"
@@ -271,37 +233,103 @@ const VideoTask = () => {
               />
             )}
 
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
-              <div className="px-4 cursor-pointer" onClick={handleProgressClick}>
-                <Progress value={progress} className="h-1 bg-gray-600" />
+            {/* Title Bar */}
+            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-white text-lg font-medium">{currentVideo.title}</h3>
+            </div>
+
+            {/* Center Play Button */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="w-16 h-16 rounded-full bg-white/10 hover:bg-white/20 hover:scale-110 transition-all duration-300"
+                onClick={togglePlay}
+              >
+                {isPlaying ? 
+                  <PauseCircle className="h-10 w-10 text-white" /> : 
+                  <PlayCircle className="h-10 w-10 text-white" />
+                }
+              </Button>
+            </div>
+
+             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {/* Progress Bar */}
+              <div className="px-4 py-2">
+                <div className="relative">
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-2 py-1 rounded text-white text-xs">
+                    {formatTime(currentTime)}
+                  </div>
+                  <div 
+                    className="w-full cursor-pointer relative h-1 group/progress"
+                    onClick={handleProgressClick}
+                  >
+                    <Progress 
+                      value={progress} 
+                      className="h-1 bg-gray-600 group-hover/progress:h-2 transition-all duration-200" 
+                    />
+                  </div>
+                </div>
               </div>
 
+              {/* Bottom Controls */}
               <div className="p-4 flex items-center justify-between text-white">
-                <div className="flex items-center gap-4">
-                  <Button size="icon" variant="ghost" className="hover:bg-white/10" onClick={togglePlay}>
-                    {isPlaying ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
+                <div className="flex items-center gap-6">
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="hover:bg-white/10 transition-colors" 
+                    onClick={togglePlay}
+                  >
+                    {isPlaying ? 
+                      <PauseCircle className="h-6 w-6" /> : 
+                      <PlayCircle className="h-6 w-6" />
+                    }
                   </Button>
 
-                  <Button size="icon" variant="ghost" className="hover:bg-white/10" onClick={toggleVolume}>
-                    {volume === 0 ? (
-                      <VolumeX className="h-6 w-6" />
-                    ) : volume < 0.5 ? (
-                      <Volume1 className="h-6 w-6" />
-                    ) : (
-                      <Volume2 className="h-6 w-6" />
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-2 group/volume">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="hover:bg-white/10 transition-colors relative" 
+                      onClick={toggleVolume}
+                    >
+                      {volume === 0 ? (
+                        <VolumeX className="h-6 w-6" />
+                      ) : volume < 0.5 ? (
+                        <Volume1 className="h-6 w-6" />
+                      ) : (
+                        <Volume2 className="h-6 w-6" />
+                      )}
+                    </Button>
+                    
+                    <div className="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300">
+                      <Progress 
+                        value={volume * 100} 
+                        className="h-1 cursor-pointer" 
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const percentage = x / rect.width;
+                          if (videoRef.current) {
+                            videoRef.current.volume = Math.max(0, Math.min(1, percentage));
+                            setVolume(Math.max(0, Math.min(1, percentage)));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   <div className="text-sm font-medium">
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   {completedVideos.includes(currentVideo.id) && (
-                    <span className="text-green-400 text-sm flex items-center gap-1">
+                    <span className="text-green-400 text-sm flex items-center gap-1 bg-green-400/10 px-3 py-1 rounded-full">
                       <CheckCircle className="h-4 w-4" />
-                      Completed
+                      <span className="font-medium">Completed</span>
                     </span>
                   )}
                 </div>
@@ -316,113 +344,118 @@ const VideoTask = () => {
                 {completedVideos.length} / {videos.length} Videos Completed
               </div>
             </div>
-
-            {allVideosCompleted && (
-              <Alert className="bg-green-900/50 border-green-500 text-green-300">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertDescription>Congratulations! You have completed all videos.</AlertDescription>
-              </Alert>
-            )}
           </div>
         </CardContent>
       </Card>
 
+      {campaignData?.campaignTemplate === 'award' && (
+        <Dialog 
+          open={showTaskDialog} 
+          onOpenChange={setShowTaskDialog}
+        >
+          <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+                Congratulations! 🎉
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-6 text-center py-4">
+              <p className="text-lg">You are eligible for the free coupans!</p>
+              <p className="text-gray-600">Click the button below to claim your reward</p>
+
+              {formError && (
+                <Alert variant="destructive" className="bg-red-900/50 border-red-500">
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-4">
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                onClick={handleFormSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Claim Your Reward"}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => setShowTaskDialog(false)}
+              >
+                Maybe Later
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+{campaignData?.campaignTemplate === 'digital_activation' && (
+         <Dialog 
+         open={showTaskDialog} 
+         onOpenChange={setShowTaskDialog}
+       >
+         <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
+           <DialogHeader>
+             <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+               Congratulations! 🎉
+             </DialogTitle>
+           </DialogHeader>
+
+           <div className="space-y-6 text-center py-4">
+             <p className="text-lg">You are eligible for the free sample!</p>
+             <p className="text-gray-600">Click the button below to claim your reward</p>
+
+             {formError && (
+               <Alert variant="destructive" className="bg-red-900/50 border-red-500">
+                 <AlertDescription>{formError}</AlertDescription>
+               </Alert>
+             )}
+           </div>
+
+           <div className="mt-6 flex flex-col gap-4">
+             <Button
+               className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+               onClick={handleFormSubmit}
+               disabled={isSubmitting}
+             >
+               {isSubmitting ? "Processing..." : "Claim Your Reward"}
+             </Button>
+             <Button 
+               variant="outline" 
+               className="w-full" 
+               onClick={() => setShowTaskDialog(false)}
+             >
+               Maybe Later
+             </Button>
+           </div>
+         </DialogContent>
+       </Dialog>
+      )}
+
       <Dialog 
-        open={showTaskDialog} 
-        onOpenChange={(open) => {
-          console.log('Task Dialog state changing to:', open)
-          setShowTaskDialog(open)
-        }}
+        open={showSuccessDialog} 
+        onOpenChange={setShowSuccessDialog}
       >
         <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-semibold">Complete the Form</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+              Success! 🎉
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="phoneNo" className="block text-sm font-medium mb-1">
-                Phone Number
-              </Label>
-              <Input
-                id="phoneNo"
-                name="phoneNo"
-                type="text"
-                placeholder="Enter your phone number"
-                className="w-full"
-                value={formData.phoneNo}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            {formError && (
-              <Alert variant="destructive" className="bg-red-900/50 border-red-500">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
+          <div className="space-y-6 text-center py-4">
+            <p className="text-lg">Your submission has been processed successfully!</p>
+            <p className="text-gray-600">Thank you for participating.</p>
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="mt-6 flex justify-center">
             <Button
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-              onClick={handleFormSubmit}
-              disabled={isSubmitting}
+              className="w-32 bg-green-600 hover:bg-green-700"
+              onClick={() => setShowSuccessDialog(false)}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowTaskDialog(false)}>
-              Cancel
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Sample Campaign Dialog (Phone Number Form) */}
-      <Dialog 
-        open={showCompletionForm} 
-        onOpenChange={(open) => {
-          console.log('Completion Form Dialog state changing to:', open)
-          setShowCompletionForm(open)
-        }}
-      >
-        <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-semibold">Complete the Form</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="phoneNo" className="block text-sm font-medium mb-1">
-                Phone Number
-              </Label>
-              <Input
-                id="phoneNo"
-                name="phoneNo"
-                type="text"
-                placeholder="Enter your phone number"
-                className="w-full"
-                value={formData.phoneNo}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            {formError && (
-              <Alert variant="destructive" className="bg-red-900/50 border-red-500">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4">
-            <Button
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-              onClick={handleFormSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowCompletionForm(false)}>
-              Cancel
+              Close
             </Button>
           </div>
         </DialogContent>

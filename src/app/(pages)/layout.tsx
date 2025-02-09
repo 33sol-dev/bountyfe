@@ -31,17 +31,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex flex-col flex-1 overflow-hidden h-screen">
         <div className="flex-1 overflow-auto mt-14 sm:mt-0">
           {isMobile && (
-            <div className="w-full flex px-2 border-b border-b-[#3C3F47] pb-2 fixed top-0 left-0 z-[999] items-center justify-between">
-              <Image
-                src="/images/logo.png"
-                height={40}
-                width={120}
-                alt="logo"
-                className="mt-2"
-              />
+            <div className="w-full flex px-2 pb-2 fixed top-2 left-0 z-[999] items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 bg-gray-800 rounded-md focus:outline-none"
+                className="p-2 ml-[19rem] bg-gray-800 rounded-md focus:outline-none"
               >
                 {sidebarOpen ? <X size={24} color="white" /> : <Menu size={24} color="white" />}
               </button>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Campaign {
   id: string;
@@ -17,6 +18,9 @@ interface Campaign {
   tags: string[];
   createdAt: string;
   status: string;
+  rewardAmount: string;
+  campaignTemplate: string;
+  taskType: string;
 }
 
 const CampaignList = () => {
@@ -45,7 +49,7 @@ const CampaignList = () => {
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch campaigns");
+        if (!response.ok) throw toast.error("Failed to fetch campaigns");
 
         const data = await response.json();
         setCampaigns(
@@ -57,10 +61,13 @@ const CampaignList = () => {
             tags: c.tags,
             createdAt: c.createdAt,
             status: c.status,
+            rewardAmount: c.rewardAmount,
+            campaignTemplate: c.campaignTemplate,
+            taskType: c.taskType,
           }))
         );
       } catch (err: any) {
-        setError(err.message || "An error occurred while fetching campaigns");
+        toast.error(err.message || "An error occurred while fetching campaigns");
       } finally {
         setIsLoading(false);
       }
@@ -162,9 +169,9 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <span className="text-sm">Total Amount</span>
+            <span className="text-sm">Reward Amount</span>
           </div>
-          <p className="text-lg font-medium">Rs.{campaign.totalAmount}</p>
+          <p className="text-lg font-medium">Rs.{campaign.rewardAmount}</p>
         </div>
         <div>
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -177,20 +184,18 @@ const CampaignCard = ({ campaign }: { campaign: Campaign }) => (
         </div>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 text-muted-foreground mb-2">
-          <Tag className="h-4 w-4" />
-          <span className="text-sm">Tags</span>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <span className="text-sm">Campaign Template</span>
+          </div>
+          <p className="text-md">{campaign.campaignTemplate}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {campaign.tags.map((tag, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
-            >
-              {tag}
-            </span>
-          ))}
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <span className="text-md">Task Type</span>
+          </div>
+          <p className="text-sm">{campaign.taskType}</p>
         </div>
       </div>
       

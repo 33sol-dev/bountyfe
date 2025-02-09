@@ -8,14 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import JSZip from "jszip";
 import qrcode from "qrcode";
 import { saveAs } from "file-saver";
@@ -33,6 +25,9 @@ interface Campaign {
   publishPin: string;
   reward_type: string;
   zipUrl: string;
+  campaignTemplate: string;
+  taskType: string;
+  rewardAmount: string;
 }
 
 const CampaignDetail: React.FC = () => {
@@ -147,6 +142,9 @@ const CampaignDetail: React.FC = () => {
           publishPin: campaignData.publishPin,
           reward_type: campaignData.reward_type,
           zipUrl: campaignData.zipUrl,
+          campaignTemplate: campaignData.campaignTemplate,
+          taskType: campaignData.taskType,
+          rewardAmount: campaignData.rewardAmount,
         });
       } catch (err: any) {
         setError(
@@ -195,8 +193,8 @@ const CampaignDetail: React.FC = () => {
           <p className="text-lg">{campaign.description}</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-lg font-semibold">${campaign.totalAmount}</p>
+              <p className="text-sm text-muted-foreground">Reward Amount</p>
+              <p className="text-lg font-semibold">Rs.{campaign.rewardAmount}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
@@ -214,12 +212,12 @@ const CampaignDetail: React.FC = () => {
             </div>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Tags</p>
-            <p className="text-lg font-semibold">{campaign.tags.join(", ")}</p>
+            <p className="text-sm text-muted-foreground">Campaign Template</p>
+            <p className="text-lg font-semibold">{campaign.campaignTemplate}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Trigger Text</p>
-            <p className="text-lg font-semibold">{campaign.triggerText}</p>
+            <p className="text-sm text-muted-foreground">Task Type</p>
+            <p className="text-lg font-semibold">{campaign.taskType}</p>
           </div>
           
           
@@ -229,98 +227,6 @@ const CampaignDetail: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* <Tabs defaultValue="insights">
-        <TabsList>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
-          <TabsTrigger value="payout">Payout Config</TabsTrigger>
-          <TabsTrigger value="data">Data</TabsTrigger>
-        </TabsList>
-        <TabsContent value="insights">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {insightsData.map((item, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle>{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline space-x-2">
-                    <span className="text-2xl font-semibold">{item.value}</span>
-                    <span
-                      className={`text-sm ${
-                        item.change.startsWith("+")
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {item.change}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent value="payout">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Payment Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Transaction Fee</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payoutData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.method}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        item.status === "Active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{item.fee}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
-        <TabsContent value="data">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>WhatsApp Number</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Pincode</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Landmark</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dataTable.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.waNumber}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.phone}</TableCell>
-                  <TableCell>{item.pincode}</TableCell>
-                  <TableCell>{item.state}</TableCell>
-                  <TableCell>{item.address}</TableCell>
-                  <TableCell>{item.city}</TableCell>
-                  <TableCell>{item.landmark}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TabsContent>
-      </Tabs> */}
     </div>
   );
 };

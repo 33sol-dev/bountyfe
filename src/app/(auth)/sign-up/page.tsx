@@ -68,7 +68,7 @@ const Signup = () => {
           body: JSON.stringify(payload),
         })
       } catch (networkError) {
-        throw new Error("Network error. Please check your connection.")
+        throw toast.error("Network error. Please check your connection.")
       }
 
       let data
@@ -76,7 +76,7 @@ const Signup = () => {
         data = await response.json()
       } catch (parseError) {
         console.error("Response parsing error:", response)
-        throw new Error(
+        throw toast.error(
           `Server returned invalid response (Status: ${response.status} ${response.statusText}). ` +
             "Please contact support if this persists.",
         )

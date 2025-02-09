@@ -174,10 +174,10 @@ export default function PayoutPage() {
       if (!campaign) return
       
       switch (campaign.template) {
-        case 'task':
+        case 'award':
           await getTaskCampaignQrs()
           break
-        case 'sample':
+        case 'digital_activation':
           await getTaskCampaignQrs()
           break
         case 'product':

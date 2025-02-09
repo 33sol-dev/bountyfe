@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from 'sonner';
 
 const Page = () => {
   const router = useRouter();
@@ -18,6 +19,7 @@ const Page = () => {
         
         if (!token) {
           setError('No authentication token found');
+          toast.error('No authentication token found');
           setTimeout(() => router.push('/sign-in'), 2000);
           return;
         }
@@ -44,26 +46,32 @@ const Page = () => {
           switch (response.status) {
             case 401:
               setError('Authentication expired. Please log in again.');
+              toast.error('Authentication expired. Please log in again.');
               localStorage.removeItem('token');
               setTimeout(() => router.push('/sign-in'), 2000);
               break;
             case 403:
               setError('You do not have permission to access this resource.');
+              toast.error('You do not have permission to access this resource.');
               setTimeout(() => router.push('/sign-in'), 2000);
               break;
             case 404:
               setError('Company service not found. Please try again later.');
+              toast.error('Company service not found. Please try again later.');
               setTimeout(() => router.push('/create-company'), 2000);
               break;
             case 429:
               setError('Too many requests. Please try again in a few minutes.');
+              toast.error('Too many requests. Please try again in a few minutes.');
               break;
             case 500:
               setError('Server error. Please try again later.');
+              toast.error('Server error. Please try again later.');
               setTimeout(() => router.push('/create-company'), 2000);
               break;
             default:
               setError(`Unexpected error: ${data.message || 'Unknown error occurred'}`);
+              toast.error(`Unexpected error: ${data.message || 'Unknown error occurred'}`);
               setTimeout(() => router.push('/create-company'), 2000);
           }
         }
@@ -71,8 +79,10 @@ const Page = () => {
         console.error('Error checking company:', error);
         if (error instanceof TypeError && error.message.includes('fetch')) {
           setError('Network error. Please check your internet connection.');
+          toast.error('Network error. Please check your internet connection.');
         } else {
           setError('An unexpected error occurred. Please try again.');
+          toast.error('An unexpected error occurred. Please try again.');
         }
         setTimeout(() => router.push('/create-company'), 2000);
       } finally {
