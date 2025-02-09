@@ -21,7 +21,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
     rewardAmount: "",
     campaignTemplate: "product",
     triggerType: "QR",
-    numberOfCodes: "5000",
+    noOfSamples: "5000",
     triggerText: "",
   });
 
@@ -85,7 +85,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
         ...formData,
         company: companyId,
         rewardAmount: Number(formData.rewardAmount),
-        numberOfCodes: Number(formData.numberOfCodes),
+        numberOfCodes: Number(formData.noOfSamples),
       };
 
       const response = await fetch(
@@ -112,7 +112,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
         name: "",
         rewardAmount: "",
         campaignTemplate: "product",
-        numberOfCodes: "5000",
+        noOfSamples: "5000",
         triggerType: "QR",
         triggerText: "",
       });
@@ -168,10 +168,10 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
                 Number of Codes <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="numberOfCodes"
+                id="noOfSamples"
                 type="number"
-                name="numberOfCodes"
-                value={formData.numberOfCodes}
+                name="noOfSamples"
+                value={formData.noOfSamples}
                 onChange={handleChange}
                 placeholder="Enter number of codes"
                 required

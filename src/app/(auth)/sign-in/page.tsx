@@ -39,44 +39,8 @@ const Page: React.FC = () => {
     setIsLoading(true)
     setMessage("")
     try {
-      const result = await signIn("google", {
-        redirect: false,
-      })
-
-      if (result?.error) {
-        throw toast.error(result.error)
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      const sessionToken = getNextAuthToken()
-
-      if (!sessionToken) {
-        throw toast.error("No session token available")
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/auth/google`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken: sessionToken,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        if (data.token) {
-          localStorage.setItem("token", data.token)
-        }
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user))
-        }
-        router.replace("/check-company")
-      } else {
-        throw toast.error(data.message || "Failed to process Google authentication")
-      }
+      // Redirect straight to your Express backend’s /auth/google route
+      window.location.href = `${process.env.NEXT_PUBLIC_BOUNTY_URL}/auth/google`
     } catch (error) {
       console.error("Error signing in with Google:", error)
       setMessage("Failed to sign in with Google")
@@ -85,6 +49,7 @@ const Page: React.FC = () => {
       setIsLoading(false)
     }
   }
+  
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(SignInSchema),

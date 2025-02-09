@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CheckCircle, PlayCircle, PauseCircle, Volume2, Volume1, VolumeX } from "lucide-react"
+import Link from "next/link"
 
 // Default video if no campaign video is provided
 const videos = [
@@ -36,12 +37,11 @@ interface Campaign {
   updatedAt: string
   _id: string
   taskUrl: string
+  triggerText: string
 }
 
 const VideoTask = () => {
   const searchParams = useSearchParams()
-  
-  // State management
   const [campaignData, setCampaignData] = useState<Campaign | null>(null)
   const [currentVideo, setCurrentVideo] = useState(videos[0])
   const [isPlaying, setIsPlaying] = useState(false)
@@ -60,8 +60,36 @@ const VideoTask = () => {
   const [formData, setFormData] = useState({
     phoneNo: "",
   })
+  const [ merchantData, setMerchantData ] = useState<any>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const fetchMerchantData = async () => {
+      const merchantId = searchParams.get('merchant')
+      if (!merchantId) return
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/get-merchant/${merchantId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) throw new Error('Failed to fetch merchant data')
+
+        const data = await response.json()
+        console.log(data)
+        setMerchantData(data.merchant)
+      } catch (error) {
+        console.error('Error fetching merchant data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchMerchantData()
+  }, [])
 
   useEffect(() => {
     const fetchCampaignData = async () => {
@@ -75,12 +103,13 @@ const VideoTask = () => {
             'Content-Type': 'application/json'
           }
         })
-        
+
         if (!response.ok) throw new Error('Failed to fetch campaign data')
-        
+
         const data = await response.json()
+        console.log(data)
         setCampaignData(data.campaign)
-        
+
         if (data.campaign.taskUrl) {
           setVideoUrl(data.campaign.taskUrl)
         }
@@ -123,50 +152,9 @@ const VideoTask = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
-  const handleFormSubmit = async () => {
-    try {
-      setIsSubmitting(true)
-      setFormError("")
-      
-      const campaignId = searchParams.get('campaign')  
-      const merchantId = searchParams.get('merchant')
-      const viewerNumber = formData.phoneNo
-      const macAddress = Math.random().toString(36).substring(7)
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/process-task`, {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          viewerNumber,
-          macAddress,
-          merchantId,
-          campaignId,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to process task")
-      }
-
-      setCompletedVideos((prev) => [...prev, currentVideo.id])
-      setShowCompletionForm(false)
-      setShowTaskDialog(false)
-      setShowSuccessDialog(true)
-
-    } catch (error) {
-      setFormError("Failed to process task. Please try again.")
-      console.error("Error processing task:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleVideoEnd = async () => {
     setIsPlaying(false)
-    
+
     if (!campaignData) return
     if (campaignData.campaignTemplate === 'award') {
       setShowTaskDialog(true)
@@ -186,7 +174,7 @@ const VideoTask = () => {
 
   const togglePlay = () => {
     if (!videoRef.current) return
-    
+
     if (isPlaying) {
       videoRef.current.pause()
     } else {
@@ -197,7 +185,7 @@ const VideoTask = () => {
 
   const toggleVolume = () => {
     if (!videoRef.current) return
-    
+
     const newVolume = volume === 0 ? 1 : 0
     videoRef.current.volume = newVolume
     setVolume(newVolume)
@@ -210,7 +198,7 @@ const VideoTask = () => {
     const clickPosition = e.clientX - progressBar.getBoundingClientRect().left
     const percentageClicked = (clickPosition / progressBar.offsetWidth) * 100
     const newTime = (percentageClicked / 100) * videoRef.current.duration
-    
+
     videoRef.current.currentTime = newTime
     setProgress(percentageClicked)
   }
@@ -240,33 +228,33 @@ const VideoTask = () => {
 
             {/* Center Play Button */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button 
-                size="icon" 
-                variant="ghost" 
+              <Button
+                size="icon"
+                variant="ghost"
                 className="w-16 h-16 rounded-full bg-white/10 hover:bg-white/20 hover:scale-110 transition-all duration-300"
                 onClick={togglePlay}
               >
-                {isPlaying ? 
-                  <PauseCircle className="h-10 w-10 text-white" /> : 
+                {isPlaying ?
+                  <PauseCircle className="h-10 w-10 text-white" /> :
                   <PlayCircle className="h-10 w-10 text-white" />
                 }
               </Button>
             </div>
 
-             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {/* Progress Bar */}
               <div className="px-4 py-2">
                 <div className="relative">
                   <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/80 px-2 py-1 rounded text-white text-xs">
                     {formatTime(currentTime)}
                   </div>
-                  <div 
+                  <div
                     className="w-full cursor-pointer relative h-1 group/progress"
                     onClick={handleProgressClick}
                   >
-                    <Progress 
-                      value={progress} 
-                      className="h-1 bg-gray-600 group-hover/progress:h-2 transition-all duration-200" 
+                    <Progress
+                      value={progress}
+                      className="h-1 bg-gray-600 group-hover/progress:h-2 transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -275,23 +263,23 @@ const VideoTask = () => {
               {/* Bottom Controls */}
               <div className="p-4 flex items-center justify-between text-white">
                 <div className="flex items-center gap-6">
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    className="hover:bg-white/10 transition-colors" 
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="hover:bg-white/10 transition-colors"
                     onClick={togglePlay}
                   >
-                    {isPlaying ? 
-                      <PauseCircle className="h-6 w-6" /> : 
+                    {isPlaying ?
+                      <PauseCircle className="h-6 w-6" /> :
                       <PlayCircle className="h-6 w-6" />
                     }
                   </Button>
 
                   <div className="flex items-center gap-2 group/volume">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="hover:bg-white/10 transition-colors relative" 
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="hover:bg-white/10 transition-colors relative"
                       onClick={toggleVolume}
                     >
                       {volume === 0 ? (
@@ -302,11 +290,11 @@ const VideoTask = () => {
                         <Volume2 className="h-6 w-6" />
                       )}
                     </Button>
-                    
+
                     <div className="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300">
-                      <Progress 
-                        value={volume * 100} 
-                        className="h-1 cursor-pointer" 
+                      <Progress
+                        value={volume * 100}
+                        className="h-1 cursor-pointer"
                         onClick={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
                           const x = e.clientX - rect.left;
@@ -349,8 +337,8 @@ const VideoTask = () => {
       </Card>
 
       {campaignData?.campaignTemplate === 'award' && (
-        <Dialog 
-          open={showTaskDialog} 
+        <Dialog
+          open={showTaskDialog}
           onOpenChange={setShowTaskDialog}
         >
           <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
@@ -372,70 +360,72 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
+            <Link href={`https://wa.me/15551709896?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                onClick={handleFormSubmit}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Processing..." : "Claim Your Reward"}
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full" 
+              <Button
+                variant="outline"
+                className="w-full"
                 onClick={() => setShowTaskDialog(false)}
               >
                 Maybe Later
               </Button>
+              </Link>
             </div>
           </DialogContent>
         </Dialog>
       )}
 
-{campaignData?.campaignTemplate === 'digital_activation' && (
-         <Dialog 
-         open={showTaskDialog} 
-         onOpenChange={setShowTaskDialog}
-       >
-         <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
-           <DialogHeader>
-             <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
-               Congratulations! 🎉
-             </DialogTitle>
-           </DialogHeader>
+      {campaignData?.campaignTemplate === 'digital_activation' && (
+        <Dialog
+          open={showTaskDialog}
+          onOpenChange={setShowTaskDialog}
+        >
+          <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl font-semibold text-center">
+                Congratulations! 🎉
+              </DialogTitle>
+            </DialogHeader>
 
-           <div className="space-y-6 text-center py-4">
-             <p className="text-lg">You are eligible for the free sample!</p>
-             <p className="text-gray-600">Click the button below to claim your reward</p>
+            <div className="space-y-6 text-center py-4">
+              <p className="text-lg">You are eligible for the free sample!</p>
+              <p className="text-gray-600">Click the button below to claim your reward</p>
 
-             {formError && (
-               <Alert variant="destructive" className="bg-red-900/50 border-red-500">
-                 <AlertDescription>{formError}</AlertDescription>
-               </Alert>
-             )}
-           </div>
+              {formError && (
+                <Alert variant="destructive" className="bg-red-900/50 border-red-500">
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
 
-           <div className="mt-6 flex flex-col gap-4">
-             <Button
-               className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-               onClick={handleFormSubmit}
-               disabled={isSubmitting}
-             >
-               {isSubmitting ? "Processing..." : "Claim Your Reward"}
-             </Button>
-             <Button 
-               variant="outline" 
-               className="w-full" 
-               onClick={() => setShowTaskDialog(false)}
-             >
-               Maybe Later
-             </Button>
-           </div>
-         </DialogContent>
-       </Dialog>
+            <div className="mt-6 flex flex-col gap-4">
+            <Link href={`https://wa.me/15551709896?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Claim Your Reward"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowTaskDialog(false)}
+              >
+                Maybe Later
+              </Button>
+              </Link>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
-      <Dialog 
-        open={showSuccessDialog} 
+      <Dialog
+        open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
       >
         <DialogContent className="bg-white text-black border border-gray-200 max-w-lg w-full mx-auto p-6 sm:p-8">
