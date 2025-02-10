@@ -28,7 +28,7 @@ interface Campaign {
   campaignTemplate: string
   taskType: string
   company: string
-  merchantRegistrationLink : string
+  merchantRegistrationLink: string
 }
 
 const CampaignList = () => {
@@ -183,70 +183,70 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
 
   return (
     <Card className="border rounded-lg overflow-hidden">
-    <CardContent className="p-6 space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-medium">{campaign.name}</h3>
-          <p className="text-muted-foreground mt-1">{campaign.description}</p>
+      <CardContent className="p-6 space-y-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-medium">{campaign.name}</h3>
+            <p className="text-muted-foreground mt-1">{campaign.description}</p>
+          </div>
+          <span
+            className={`px-2 py-1 text-xs rounded-full ${campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+              }`}
+          >
+            {campaign.status}
+          </span>
         </div>
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-          }`}
-        >
-          {campaign.status}
-        </span>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <span className="text-sm">Reward Amount</span>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-sm">Reward Amount</span>
+            </div>
+            <p className="text-lg font-medium">Rs.{campaign.rewardAmount}</p>
           </div>
-          <p className="text-lg font-medium">Rs.{campaign.rewardAmount}</p>
-        </div>
-        <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <Calendar className="h-4 w-4" />
-            <span className="text-sm">Created</span>
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm">Created</span>
+            </div>
+            <p className="text-sm">{new Date(campaign.createdAt).toLocaleDateString()}</p>
           </div>
-          <p className="text-sm">{new Date(campaign.createdAt).toLocaleDateString()}</p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <span className="text-sm">Campaign Template</span>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-sm">Campaign Template</span>
+            </div>
+            <p className="text-md">{campaign.campaignTemplate}</p>
           </div>
-          <p className="text-md">{campaign.campaignTemplate}</p>
-        </div>
-        <div>
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <span className="text-md">Task Type</span>
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-md">Task Type</span>
+            </div>
+            <p className="text-sm">{campaign.taskType}</p>
           </div>
-          <p className="text-sm">{campaign.taskType}</p>
         </div>
-      </div>
-      
-      <div className="flex gap-3">          
-          <Button 
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <Button
             onClick={handleQRDownload}
-            variant="default" 
-            className="w-full bg-black text-white w-[17rem]"
+            variant="default"
+            className="flex-1 bg-black text-white"
           >
             Register Merchant QR
           </Button>
 
-      <Link href={`/campaigns/${campaign.id}`}>
-        <Button variant="default" className="w-full bg-black text-white w-[17rem]">
-          View Details
-        </Button>
-      </Link>
-      </div>
+          <Link href={`/campaigns/${campaign.id}`} className="flex-1">
+            <Button variant="default" className="w-full bg-black text-white">
+              View Details
+            </Button>
+          </Link>
+        </div>
 
-    </CardContent>
-  </Card>
-)}
+      </CardContent>
+    </Card>
+  )
+}
 
 export default CampaignList

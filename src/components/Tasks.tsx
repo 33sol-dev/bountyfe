@@ -223,7 +223,7 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
+            <div className="space-y-2 bg-white">
               <Label htmlFor="campaignTemplate" className="text-black">
                 Campaign Type <span className="text-red-500">*</span>
               </Label>
@@ -233,11 +233,11 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
               >
                 <SelectTrigger
                   id="campaignType"
-                  className="w-full border-gray-700/10 bg-white text-black"
+                  className="w-full border-gray-700/10 bg-white text-black bg-white"
                 >
                   <SelectValue placeholder="Select campaign type" />
                 </SelectTrigger>
-                <SelectContent className=" ">
+                <SelectContent className="bg-white">
                   <SelectItem value="award" className="text-black">Award</SelectItem>
                   <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem>
                 </SelectContent>
@@ -257,7 +257,7 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
                 >
                   <SelectValue placeholder="Select campaign type" />
                 </SelectTrigger>
-                <SelectContent className=" ">
+                <SelectContent className="bg-white">
                   {/* <SelectItem value="award" className="text-black">Award</SelectItem>
                   <SelectItem value="digital_activation" className="text-black">Digital Activation</SelectItem> */}
                   <SelectItem value="social_media" className="text-black">Social Media</SelectItem>
