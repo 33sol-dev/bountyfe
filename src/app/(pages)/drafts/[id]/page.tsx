@@ -82,19 +82,7 @@ export default function PayoutPage() {
 
   const getTaskCampaignQrs = async () => {
     try {
-      const token = localStorage.getItem("token")
-      if (!token) {
-        router.push("/sign-in")
-        return
-      }
-
-      // Fetch merchants for this campaign
-      const merchantsResponse = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
+      const merchantsResponse = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/${id}`)
 
       if (!merchantsResponse.ok) {
         throw new Error("Failed to fetch merchants")
