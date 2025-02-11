@@ -69,7 +69,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
       return;
     }
 
-    const requiredFields = ["name", "numberOfCodes", "triggerText", "rewardAmount"];
+    const requiredFields = ["name", "noOfSamples", "triggerText", "rewardAmount"];
     const missingFields = requiredFields.filter(
       (field) => !formData[field as keyof typeof formData]
     );
@@ -85,7 +85,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
         ...formData,
         company: companyId,
         rewardAmount: Number(formData.rewardAmount),
-        numberOfCodes: Number(formData.noOfSamples),
+        noOfSamples: Number(formData.noOfSamples),
       };
 
       const response = await fetch(
@@ -164,7 +164,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
 
           <div className="w-full">
             <div className="space-y-2">
-              <Label htmlFor="numberOfCodes" className="text-black">
+              <Label htmlFor="noOfSamples" className="text-black">
                 Number of Codes <span className="text-red-500">*</span>
               </Label>
               <Input

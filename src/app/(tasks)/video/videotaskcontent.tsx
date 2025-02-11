@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { CheckCircle, PlayCircle, PauseCircle, Volume2, Volume1, VolumeX } from "lucide-react"
 import Link from "next/link"
 
-// Default video if no campaign video is provided
 const videos = [
   {
     id: 1,
@@ -22,10 +21,12 @@ const videos = [
   },
 ]
 
-// Campaign interface defining the structure of campaign data
 interface Campaign {
   campaignTemplate: "award" | "digital_activation"
-  company: string
+  company: {
+    phoneNumber: string;
+    [key: string]: any;
+  }
   createdAt: string
   description: string
   merchantRegistrationLink: string
@@ -39,6 +40,7 @@ interface Campaign {
   taskUrl: string
   triggerText: string
 }
+
 
 const VideoTask = () => {
   const searchParams = useSearchParams()
@@ -360,7 +362,7 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/15551709896?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
+            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
                 disabled={isSubmitting}
@@ -404,7 +406,7 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/15551709896?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
+            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
                 disabled={isSubmitting}
