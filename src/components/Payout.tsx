@@ -1,70 +1,248 @@
-import { ArrowUpDown, Filter, RotateCcw } from "lucide-react"
+"use client"
+
+import { useState, useEffect } from "react"
+import { ArrowUpDown, Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { toast } from "sonner"
+import { useParams } from "next/navigation"
+import { Input } from "@/components/ui/input"
 
-interface PayoutConfig {
-  productType: "BR" | "CM"
-  payoutLevel: number
-  payoutAmount: number
-  id: number
+interface PayoutLevelConfig {
+  min: number
+  max: number
+  avg: number
+  level: number
+  id: string
 }
 
-export default function PayoutConfigTable() {
-  const payoutData: PayoutConfig[] = [
-    { productType: "BR", payoutLevel: 1, payoutAmount: 100, id: 1 },
-    { productType: "BR", payoutLevel: 2, payoutAmount: 125, id: 2 },
-    { productType: "BR", payoutLevel: 3, payoutAmount: 190, id: 3 },
-    { productType: "BR", payoutLevel: 4, payoutAmount: 200, id: 4 },
-    { productType: "BR", payoutLevel: 5, payoutAmount: 150, id: 5 },
-    { productType: "BR", payoutLevel: 6, payoutAmount: 75, id: 6 },
-  ]
+interface PayoutProps {
+  campaignId?: string
+}
+
+export default function Payout({ campaignId: propsCampaignId }: PayoutProps) {
+  const params = useParams()
+  const [payoutData, setPayoutData] = useState<PayoutLevelConfig[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  const fetchPayoutConfig = async () => {
+    setIsLoading(true)
+    setError("")
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/getPayoutConfig/${params.id}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      )
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to fetch payout configuration")
+      }
+      
+      const data = await response.json()
+      const transformedData = Object.entries(data).map(([level, config]: [string, any]) => ({
+        level: parseInt(level),
+        min: config.min,
+        max: config.max,
+        avg: config.avg,
+        id: `level-${level}-${Date.now()}`
+      }))
+      setPayoutData(transformedData)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load payout configuration")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const addNewRow = () => {
+    const existingLevels = payoutData.map(row => row.level).filter(level => !isNaN(level))
+    const newLevel = existingLevels.length > 0 ? Math.max(...existingLevels) + 1 : 1
+    setPayoutData([...payoutData, {
+      level: newLevel,
+      min: 0,
+      max: 0,
+      avg: 0,
+      id: `level-${newLevel}-${Date.now()}`
+    }])
+  }
+
+  const removeRow = (id: string) => {
+    setPayoutData(payoutData.filter(row => row.id !== id))
+  }
+
+  const handleValueChange = (id: string, field: keyof PayoutLevelConfig, value: string) => {
+    const numValue = parseFloat(value)
+    if (isNaN(numValue)) return
+    setPayoutData(prevData => 
+      prevData.map(row => 
+        row.id === id 
+          ? { ...row, [field]: numValue }
+          : row
+      )
+    )
+  }
+
+  const updatePayoutConfig = async () => {
+
+    setIsSaving(true)
+
+    try {
+      const configOutput = {
+        payoutConfig: payoutData.reduce((acc, curr) => {
+          acc[curr.level.toString()] = {
+            min: curr.min,
+            max: curr.max,
+            avg: curr.avg
+          }
+          return acc
+        }, {} as Record<string, { min: number; max: number; avg: number }>)
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/external/updatePayoutConfig/${params.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify(configOutput)
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.errors?.[0]?.msg || "Failed to update configuration")
+      }
+
+      toast.success("Payout configuration updated successfully")
+      await fetchPayoutConfig()
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update payout configuration")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPayoutConfig()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
 
   return (
-    <div className="w-full w-[80vw] p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="w-full p-4">
+      <div className="flex items-center justify-between mb-4 w-[80vw]">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Level Wise Config</h2>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <h2 className="text-lg font-semibold">Level Wise Payout Config</h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={() => setPayoutData([...payoutData].sort((a, b) => a.level - b.level))}
+          >
             <ArrowUpDown className="h-4 w-4" />
           </Button>
         </div>
+        <Button
+          onClick={addNewRow}
+          className="flex items-center gap-2 bg-black text-white"
+        >
+          <Plus className="h-4 w-4" />
+          Add Row
+        </Button>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product type</TableHead>
-              <TableHead>Payout level</TableHead>
-              <TableHead>Payout amount</TableHead>
-              <TableHead>ID</TableHead>
+              <TableHead>Min Payout</TableHead>
+              <TableHead>Max Payout</TableHead>
+              <TableHead>Average Payout</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payoutData.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={`
-                      ${row.productType === "BR" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
-                    `}
-                  >
-                    {row.productType}
-                  </Badge>
+                  <Input
+                    type="number"
+                    value={row.min}
+                    onChange={(e) => handleValueChange(row.id, 'min', e.target.value)}
+                    className="w-80 border border-gray-700"
+                    min="0"
+                  />
                 </TableCell>
-                <TableCell>{row.payoutLevel}</TableCell>
-                <TableCell>{row.payoutAmount}</TableCell>
-                <TableCell>{row.id}</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={row.max}
+                    onChange={(e) => handleValueChange(row.id, 'max', e.target.value)}
+                    className="w-80  border border-gray-700"
+                    min="0"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={row.avg}
+                    onChange={(e) => handleValueChange(row.id, 'avg', e.target.value)}
+                    className="w-80  border border-gray-700"
+                    min="0"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeRow(row.id)}
+                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white">Update Config</Button>
+      <Button 
+        className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white"
+        onClick={updatePayoutConfig}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <div className="flex items-center gap-2 justify-center">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Updating Configuration...</span>
+          </div>
+        ) : (
+          'Update Config'
+        )}
+      </Button>
     </div>
   )
 }
-

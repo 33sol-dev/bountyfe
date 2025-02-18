@@ -132,16 +132,16 @@ const CampaignList = () => {
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4 border-b rounded-none bg-transparent p-0 h-auto">
+        <TabsList className="mb-4 border-b rounded-none p-0 h-auto">
           <TabsTrigger
             value="active"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:bg-black data-[state=active]:border-primary px-4 pb-2"
           >
             Live Campaigns ({!isLoading && !error ? campaigns.filter((c) => c.status === "Active").length : 0})
           </TabsTrigger>
           <TabsTrigger
             value="ready"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-black px-4 pb-2"
           >
             Draft Campaigns ({!isLoading && !error ? campaigns.filter((c) => c.status === "Ready").length : 0})
           </TabsTrigger>
@@ -221,12 +221,6 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
               <span className="text-sm">Campaign Template</span>
             </div>
             <p className="text-md">{campaign.campaignTemplate}</p>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <span className="text-md">Task Type</span>
-            </div>
-            <p className="text-sm">{campaign.taskType}</p>
           </div>
         </div>
 

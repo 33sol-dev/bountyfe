@@ -33,6 +33,10 @@ interface Campaign {
   rewardAmount: string;
 }
 
+interface PayoutProps {
+  campaignId: string;
+}
+
 const CampaignDetail: React.FC = () => {
   const router = useRouter();
   const { id } = useParams();
@@ -196,17 +200,17 @@ const CampaignDetail: React.FC = () => {
       </div>
 
       <div className="flex justify-between items-center">
-        <Tabs defaultValue="campaign" className="hover:bg-gray">
+        <Tabs defaultValue="campaign" className="">
           <TabsList>
-            <TabsTrigger value="campaign">Campaign</TabsTrigger>
-            <TabsTrigger value="payout">Payout</TabsTrigger>
-            <TabsTrigger value="data">Data</TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="campaign">Campaign</TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="payout">Payout</TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="data">Data</TabsTrigger>
           </TabsList>
           <TabsContent value="campaign">
             <CampaignData />
           </TabsContent>
           <TabsContent value="payout">
-            <Payout />
+            <Payout campaignId={campaign.id}/>
           </TabsContent>
           <TabsContent value="data">
             <Data />
