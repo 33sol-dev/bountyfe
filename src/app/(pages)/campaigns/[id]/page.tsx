@@ -12,6 +12,9 @@ import JSZip from "jszip";
 import qrcode from "qrcode";
 import { saveAs } from "file-saver";
 import Link from "next/link";
+import CampaignData from "@/components/CampaignData";
+import Data from "@/components/Data";
+import Payout from "@/components/Payout";
 
 interface Campaign {
   id: string;
@@ -125,7 +128,7 @@ const CampaignDetail: React.FC = () => {
         if (!response.ok) {
           throw new Error("Failed to fetch campaign");
         }
-        
+
         const data = await response.json();
         const campaignData = data.campaign;
         localStorage.setItem("campaignId", campaignData._id);
@@ -183,50 +186,34 @@ const CampaignDetail: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+
+    <div className="container p-3 space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{campaign.name}</h1>
+        <h1 className="text-3xl font-bold">Campaign Details</h1>
+        <Link href="/campaigns/register-merchant">
+          <Button className="bg-black text-white">Add Merchant</Button>
+        </Link>
       </div>
 
-      <Card>
-        <CardContent className="grid gap-4 pt-6">
-          <p className="text-lg">{campaign.description}</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Reward Amount</p>
-              <p className="text-lg font-semibold">Rs.{campaign.rewardAmount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <p className="text-lg font-semibold">{campaign.status}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Reward Type</p>
-              <p className="text-lg font-semibold">{campaign.reward_type}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Created At</p>
-              <p className="text-lg font-semibold">
-                {new Date(campaign.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Campaign Template</p>
-            <p className="text-lg font-semibold">{campaign.campaignTemplate}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Task Type</p>
-            <p className="text-lg font-semibold">{campaign.taskType}</p>
-          </div>
-          
-          
-          <Link href={"/campaigns/register-merchant"}>
-            <Button className="bg-black text-white w-[100%]">Add merchants</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-center">
+        <Tabs defaultValue="campaign" className="hover:bg-gray">
+          <TabsList>
+            <TabsTrigger value="campaign">Campaign</TabsTrigger>
+            <TabsTrigger value="payout">Payout</TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
+          </TabsList>
+          <TabsContent value="campaign">
+            <CampaignData />
+          </TabsContent>
+          <TabsContent value="payout">
+            <Payout />
+          </TabsContent>
+          <TabsContent value="data">
+            <Data />
+          </TabsContent>
+        </Tabs>
 
+      </div>
     </div>
   );
 };

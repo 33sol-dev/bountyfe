@@ -21,7 +21,7 @@ const Sidebar = ({
   const menuItems = [
     { name: "Dashboard", icon: "/svgs/home.svg", href: "/dashboard" },
     { name: "Campaigns", icon: "/svgs/profile.svg", href: "/campaigns" },
-    { name: "Draft Campaigns", icon: "/svgs/notepad.svg", href: "/drafts" },
+    // { name: "Draft Campaigns", icon: "/svgs/notepad.svg", href: "/drafts" },
     { name: "Recharge", icon: "/svgs/handcoins.svg", href: "/recharge" },
   ];
 

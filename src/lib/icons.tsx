@@ -1,5 +1,5 @@
 import { AlignHorizontalJustifyCenterIcon, Blocks, CircleDollarSign, CircleUser, Home, Menu, MessagesSquare, Plus, Radio, Rocket, Settings,Users } from "lucide-react";
-import { iconType } from "../types/types";
+import { iconType } from "../../../bounty/src/types/types";
 
 const icons = {
   home: ({ size = 16, color = "#000", className }: iconType) => (

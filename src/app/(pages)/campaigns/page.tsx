@@ -1,12 +1,11 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, AlertCircle, Award, Plus, Calendar, DollarSign, Tag } from "lucide-react"
+import { Loader2, AlertCircle, Plus, Calendar } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
@@ -98,10 +97,12 @@ const CampaignList = () => {
 
     return (
       <>
-        <TabsContent value="all" className="grid gap-4 md:grid-cols-2">
-          {campaigns.map((campaign) => (
-            <CampaignCard key={campaign.id} campaign={campaign} />
-          ))}
+        <TabsContent value="ready" className="grid gap-4 md:grid-cols-2">
+          {campaigns
+            .filter((c) => c.status === "Ready")
+            .map((campaign) => (
+              <CampaignCard key={campaign.id} campaign={campaign} />
+            ))}
         </TabsContent>
 
         <TabsContent value="active" className="grid gap-4 md:grid-cols-2">
@@ -133,16 +134,16 @@ const CampaignList = () => {
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-4 border-b rounded-none bg-transparent p-0 h-auto">
           <TabsTrigger
-            value="all"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
-          >
-            All Campaigns ({!isLoading && !error ? campaigns.length : 0})
-          </TabsTrigger>
-          <TabsTrigger
             value="active"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
           >
-            Active ({!isLoading && !error ? campaigns.filter((c) => c.status === "Active").length : 0})
+            Live Campaigns ({!isLoading && !error ? campaigns.filter((c) => c.status === "Active").length : 0})
+          </TabsTrigger>
+          <TabsTrigger
+            value="ready"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 pb-2"
+          >
+            Draft Campaigns ({!isLoading && !error ? campaigns.filter((c) => c.status === "Ready").length : 0})
           </TabsTrigger>
         </TabsList>
 
@@ -163,9 +164,9 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
       }
 
       const qrDataUrl = await qrcode.toDataURL(campaign.merchantRegistrationLink, {
-        errorCorrectionLevel: 'H',
+        errorCorrectionLevel: "H",
         margin: 1,
-        width: 400
+        width: 400,
       })
 
       // Create temporary link and trigger download
@@ -176,7 +177,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
       downloadLink.click()
       document.body.removeChild(downloadLink)
     } catch (err) {
-      console.error('Error generating QR code:', err)
+      console.error("Error generating QR code:", err)
       toast.error("Failed to generate QR code")
     }
   }
@@ -190,8 +191,9 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
             <p className="text-muted-foreground mt-1">{campaign.description}</p>
           </div>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-              }`}
+            className={`px-2 py-1 text-xs rounded-full ${
+              campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            }`}
           >
             {campaign.status}
           </span>
@@ -228,25 +230,33 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full">
-          <Button
-            onClick={handleQRDownload}
-            variant="default"
-            className="flex-1 bg-black text-white"
-          >
-            Register Merchant QR
-          </Button>
-
-          <Link href={`/campaigns/${campaign.id}`} className="flex-1">
-            <Button variant="default" className="w-full bg-black text-white">
-              View Details
+        <div className="grid grid-cols-3 sm:flex-row gap-3 w-full">
+          {campaign.status === "Ready" ? (
+            <Button variant="outline" className="bg-black text-white col-span-3">
+              <Link href={`/drafts/${campaign.id}`}>Publish</Link>
             </Button>
-          </Link>
-        </div>
+          ) : (
+            <>
+              <Button onClick={handleQRDownload} variant="default" className="flex-1 bg-black text-white">
+                Register Merchant QR
+              </Button>
 
+              <Link href={`/campaigns/${campaign.id}`} className="flex-1">
+                <Button variant="default" className="w-full bg-black text-white">
+                  View Details
+                </Button>
+              </Link>
+
+              <Button variant="outline" className="bg-black text-white">
+                <Link href={`/drafts/${campaign.id}`}>Download</Link>
+              </Button>
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
 }
 
 export default CampaignList
+
