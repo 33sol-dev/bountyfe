@@ -9,14 +9,14 @@ import { Loader2, Download } from "lucide-react"
 import Papa from 'papaparse'
 import { toast } from "sonner"
 
-interface customerData {
+interface CustomerData {
   [key: string]: string
 }
 
-export default function customerCSVViewer() {
+export default function CutomerCSVViewer() {
   const searchParams = useSearchParams()
   const campaignId = localStorage.getItem('campaignId')
-  const [csvData, setCSVData] = useState<customerData[]>([])
+  const [csvData, setCSVData] = useState<CustomerData[]>([])
   const [headers, setHeaders] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -56,7 +56,7 @@ export default function customerCSVViewer() {
         complete: (results :any) => {
           if (results.data.length > 0) {
             setHeaders(Object.keys(results.data[0]))
-            setCSVData(results.data as customerData[])
+            setCSVData(results.data as CustomerData[])
           }
         },
         error: (error : any) => {
