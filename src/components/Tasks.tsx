@@ -23,7 +23,6 @@ interface FormData {
   triggerText: string;
   campaignTemplate: string;
   taskUrl: string;
-  rewardAmount: string;
   taskType: string;
   noOfSamples: string;
   payoutConfig: PayoutConfig[];
@@ -43,7 +42,6 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
     triggerText: '',
     campaignTemplate: "task",
     taskUrl: '',
-    rewardAmount: '',
     taskType: '',
     noOfSamples: '',
     payoutConfig: [{ min: '', max: '', avg: '' }]
@@ -207,7 +205,6 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
       const payload = {
         ...formData,
         company: companyId,
-        rewardAmount: parseFloat(formData.rewardAmount),
         taskUrl: videoUrl || formData.taskUrl,
         payoutConfig: JSON.stringify(payoutConfigObj)
       }
@@ -234,7 +231,6 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
         triggerText: '',
         campaignTemplate: "task",
         taskUrl: '',
-        rewardAmount: '',
         taskType: '',
         noOfSamples: '',
         payoutConfig: [{ min: '', max: '', avg: '' }]
@@ -311,24 +307,6 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
               </Select>
             </div>
           </div>
-
-          {formData.campaignTemplate === 'award' && (
-            <div className="space-y-2">
-              <Label htmlFor="rewardAmount" className="text-black">
-                Reward Amount <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="rewardAmount"
-                type="number"
-                name="rewardAmount"
-                value={formData.rewardAmount}
-                onChange={handleChange}
-                placeholder="Enter reward amount"
-                required
-                className="w-full border-gray-700/10 text-black placeholder:text-gray-400"
-              />
-            </div>
-          )}
 
           {formData.campaignTemplate === 'award' && (
             <div className="space-y-4">

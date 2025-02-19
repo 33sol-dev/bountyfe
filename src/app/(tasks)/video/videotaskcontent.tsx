@@ -37,7 +37,11 @@ interface Campaign {
   totalAmount: number
   updatedAt: string
   _id: string
-  taskUrl: string
+  taskConfig: {
+    taskType: string;
+    taskUrl: string;
+    triggerText: string;
+  }
   triggerText: string
 }
 
@@ -112,8 +116,8 @@ const VideoTask = () => {
         console.log(data)
         setCampaignData(data.campaign)
 
-        if (data.campaign.taskUrl) {
-          setVideoUrl(data.campaign.taskUrl)
+        if (data.campaign.taskConfig?.taskUrl) {
+          setVideoUrl(data.campaign.taskConfig.taskUrl)
         }
       } catch (error) {
         console.error('Error fetching campaign data:', error)
