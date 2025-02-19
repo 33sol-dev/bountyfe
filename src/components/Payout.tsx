@@ -47,7 +47,7 @@ export default function Payout({ campaignId: propsCampaignId }: PayoutProps) {
       }
       
       const data = await response.json()
-      const transformedData = Object.entries(data).map(([level, config]: [string, any]) => ({
+      const transformedData = Object.entries(data.payoutConfig).map(([level, config]: [string, any]) => ({
         level: parseInt(level),
         min: config.min,
         max: config.max,

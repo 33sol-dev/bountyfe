@@ -166,8 +166,8 @@ const VideoTask = () => {
       setShowTaskDialog(true)
       setShowCompletionForm(false)
     } else if (campaignData.campaignTemplate === 'digital_activation') {
-      setShowTaskDialog(false)
-      setShowCompletionForm(true)
+      setShowTaskDialog(true)
+      setShowCompletionForm(false)
     }
   }
 
@@ -366,7 +366,7 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
+            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
                 disabled={isSubmitting}
@@ -410,7 +410,7 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.triggerText}-${merchantData?.merchantCode?.code}`}>
+            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
                 disabled={isSubmitting}
