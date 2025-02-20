@@ -209,6 +209,18 @@ const VideoTask = () => {
     setProgress(percentageClicked)
   }
 
+  useEffect(() => {
+    if (videoRef.current && videoUrl) {
+      setIsPlaying(true)
+      videoRef.current.autoplay = true
+      videoRef.current.muted = true
+      videoRef.current.play().catch(error => {
+        console.log("Autoplay failed:", error)
+        setIsPlaying(false)
+      })
+    }
+  }, [videoUrl])
+
   if (isLoading) {
     return <div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>
   }
@@ -224,6 +236,8 @@ const VideoTask = () => {
                 className="w-full h-full object-contain"
                 src={videoUrl}
                 onEnded={handleVideoEnd}
+                autoPlay
+                muted 
               />
             )}
 
