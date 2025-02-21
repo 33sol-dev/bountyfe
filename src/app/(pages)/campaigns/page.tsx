@@ -131,7 +131,7 @@ const CampaignList = () => {
         </Link>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs defaultValue="active" className="w-full">
         <TabsList className="mb-4 border-b rounded-none p-0 h-auto">
           <TabsTrigger
             value="active"

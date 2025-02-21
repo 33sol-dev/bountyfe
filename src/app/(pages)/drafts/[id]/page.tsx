@@ -186,8 +186,28 @@ export default function PayoutPage() {
     setError("")
     
     try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        router.push("/sign-in")
+        return
+      }
+
       if (campaign && payoutPin === campaign.publishPin) {
         setIsPinCorrect(true)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/publish`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ pin: payoutPin }),
+        })
+  
+        if (!response.ok) {
+          throw new Error(`Publishing failed with status: ${response.status}`)
+        }
+  
+        await response.json()
       } else {
         setError("Incorrect payout pin. Please try again.")
       }
@@ -209,23 +229,9 @@ export default function PayoutPage() {
         return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/publish`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pin: payoutPin }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Publishing failed with status: ${response.status}`)
-      }
-
-      await response.json()
       await getCampaignQrs()
     } catch (err: any) {
-      setError(err.message || "Failed to publish campaign")
+      setError(err.message || "Failed to download campaign qrs")
     } finally {
       setIsPublishing(false)
     }
@@ -300,10 +306,10 @@ export default function PayoutPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying...
+                      Verifying & Publishing Campaign...
                     </>
                   ) : (
-                    "Verify Pin"
+                    "Verify Pin & Publish"
                   )}
                 </Button>
               </form>
@@ -324,7 +330,7 @@ export default function PayoutPage() {
                   {isPublishing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Publishing and Downloading...
+                       Downloading...
                     </>
                   ) : (
                     <>
