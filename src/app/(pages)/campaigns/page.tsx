@@ -202,12 +202,6 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <span className="text-sm">Reward Amount</span>
-            </div>
-            <p className="text-lg font-medium">Rs.{campaign.rewardAmount}</p>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
               <span className="text-sm">Created</span>
             </div>

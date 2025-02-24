@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import JSZip from "jszip"
 import qrcode from "qrcode"
 import { saveAs } from "file-saver"
+import { toast } from "sonner"
 
 interface Campaign {
   name: string
@@ -42,6 +43,7 @@ export default function PayoutPage() {
   const [isPinCorrect, setIsPinCorrect] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const campaignId = localStorage.getItem('campaignId')
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -79,6 +81,42 @@ export default function PayoutPage() {
       fetchCampaign()
     }
   }, [id, router])
+
+  const downloadCSV = async () => {
+    if (!campaignId) return
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error("Authentication token not found")
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaignId}/merchants/csv`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error("Failed to download CSV")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `merchants-${campaignId}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download CSV")
+    }
+  }
 
   const getTaskCampaignQrs = async () => {
     try {
@@ -322,6 +360,7 @@ export default function PayoutPage() {
                     Your payout pin has been verified successfully.
                   </AlertDescription>
                 </Alert>
+                <div className="flex gap-4">
                 <Button
                   onClick={handlePublish}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -339,6 +378,24 @@ export default function PayoutPage() {
                     </>
                   )}
                 </Button>
+                <Button
+                  onClick={downloadCSV}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isPublishing}
+                >
+                  {isPublishing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Downloading CSV...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-5 w-5" />
+                      Download Merchant CSV
+                    </>
+                  )}
+                </Button>
+              </div>
               </div>
             )}
           </CardContent>

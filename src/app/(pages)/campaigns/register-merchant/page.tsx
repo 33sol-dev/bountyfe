@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface FormData {
   merchantName: string;
@@ -16,7 +17,7 @@ interface ApiResponse {
   merchant?: any;
 }
 
-export default function MerchantForm()  {
+export default function MerchantForm() {
   const companyId = localStorage.getItem("companyId") as string;
 
   const initialFormState: FormData = {
@@ -53,27 +54,27 @@ export default function MerchantForm()  {
 
   const validateForm = (): boolean => {
     if (!formData.merchantName.trim()) {
-      setError("Merchant name is required");
+      toast.error("Merchant name is required");
       return false;
     }
     if (!formData.upiId.trim()) {
-      setError("UPI ID is required");
+      toast.error("UPI ID is required");
       return false;
     }
     if (!formData.merchantMobile.trim()) {
-      setError("Mobile number is required");
+      toast.error("Mobile number is required");
       return false;
     }
     if (!formData.company.trim()) {
-      setError("Company name is required");
+      toast.error("Company name is required");
       return false;
     }
     if (!formData.campaignId) {
-      setError("Campaign ID is missing");
+      toast.error("Campaign ID is missing");
       return false;
     }
     if (formData.merchantEmail && !formData.merchantEmail.includes('@')) {
-      setError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       return false;
     }
     return true;
@@ -106,13 +107,13 @@ export default function MerchantForm()  {
         throw new Error(data.message || "Failed to create merchant");
       }
 
-      setSuccess("Merchant created successfully!");
+      toast.success("Merchant created successfully!");
       setFormData({
         ...initialFormState,
         campaignId: formData.campaignId,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error in creating merchant");
+      toast.error(err instanceof Error ? err.message : "Error in creating merchant");
     } finally {
       setLoading(false);
     }
@@ -125,18 +126,6 @@ export default function MerchantForm()  {
           <h2 className="text-3xl font-bold text-black mb-8">
             Add New Merchant
           </h2>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-md">
-              {success}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -179,43 +168,23 @@ export default function MerchantForm()  {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="merchantMobile"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Mobile Number *
-                </label>
-                <input
-                  type="tel"
-                  id="merchantMobile"
-                  name="merchantMobile"
-                  value={formData.merchantMobile}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter mobile number"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="merchantEmail"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="merchantEmail"
-                  name="merchantEmail"
-                  value={formData.merchantEmail}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter email address"
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="merchantMobile"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Mobile Number *
+              </label>
+              <input
+                type="tel"
+                id="merchantMobile"
+                name="merchantMobile"
+                value={formData.merchantMobile}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter mobile number"
+              />
             </div>
 
             <div>
