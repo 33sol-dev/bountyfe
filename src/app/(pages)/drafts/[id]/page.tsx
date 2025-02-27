@@ -231,7 +231,6 @@ export default function PayoutPage() {
       }
 
       if (campaign && payoutPin === campaign.publishPin) {
-        setIsPinCorrect(true)
         const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${id}/publish`, {
           method: "POST",
           headers: {
@@ -244,8 +243,11 @@ export default function PayoutPage() {
         if (!response.ok) {
           throw new Error(`Publishing failed with status: ${response.status}`)
         }
-  
+        
+        toast.success("Campaign Published successfully")
         await response.json()
+        
+        router.push(`/campaigns/${id}`)
       } else {
         setError("Incorrect payout pin. Please try again.")
       }
@@ -266,7 +268,7 @@ export default function PayoutPage() {
         router.push("/sign-in")
         return
       }
-
+      
       await getCampaignQrs()
     } catch (err: any) {
       setError(err.message || "Failed to download campaign qrs")
@@ -319,7 +321,6 @@ export default function PayoutPage() {
             <div>{campaign.publishPin}</div>
           </CardHeader>
           <CardContent>
-            {!isPinCorrect ? (
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <div className="text-black font-medium mb-2">Payout Pin</div>
@@ -351,53 +352,6 @@ export default function PayoutPage() {
                   )}
                 </Button>
               </form>
-            ) : (
-              <div className="space-y-6">
-                <Alert className="bg-green-100 border-green-400">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-700">Success!</AlertTitle>
-                  <AlertDescription className="text-green-600">
-                    Your payout pin has been verified successfully.
-                  </AlertDescription>
-                </Alert>
-                <div className="flex gap-4">
-                <Button
-                  onClick={handlePublish}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={isPublishing}
-                >
-                  {isPublishing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                       Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-5 w-5" />
-                      Download Campaign Files
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={downloadCSV}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={isPublishing}
-                >
-                  {isPublishing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                       Downloading CSV...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-5 w-5" />
-                      Download Merchant CSV
-                    </>
-                  )}
-                </Button>
-              </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

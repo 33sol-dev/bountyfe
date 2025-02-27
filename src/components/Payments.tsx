@@ -108,6 +108,8 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
       const responseData = await response.json();
       console.log("Campaign created successfully:", responseData);
 
+      const campaignId = responseData.campaign._id || responseData.campaign.id
+
       setFormData({
         name: "",
         rewardAmount: "",
@@ -117,7 +119,7 @@ export default function PaymentForm({ activeTab }: { activeTab: string }) {
         triggerText: "",
       });
 
-      router.push("/campaigns");
+      router.push(`drafts/${campaignId}`);
     } catch (err: any) {
       setError(err.message || "Failed to create campaign");
     } finally {

@@ -225,6 +225,8 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
 
       const responseData = await response.json()
       console.log('Campaign created successfully:', responseData)
+      
+      const campaignId = responseData.campaign._id || responseData.campaign.id
 
       setFormData({
         name: '',
@@ -236,7 +238,7 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
         payoutConfig: [{ min: '', max: '', avg: '' }]
       })
 
-      router.push('/campaigns')
+      router.push(`/drafts/${campaignId}`)
     } catch (err: any) {
       setError(err.message || "Failed to create campaign")
     } finally {
