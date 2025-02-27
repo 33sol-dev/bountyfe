@@ -237,7 +237,8 @@ export default function PayoutPage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ pin: payoutPin }),
+          body: JSON.stringify({ pin: payoutPin,status: 'Active'}),
+          
         })
   
         if (!response.ok) {

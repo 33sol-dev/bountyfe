@@ -191,14 +191,12 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
             <p className="text-muted-foreground mt-1">{campaign.description}</p>
           </div>
           <span
-            className={`py-1 text-xs rounded-full ${campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-              }`}
+            className={`px-2 py-1 text-xs rounded-full ${
+              campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            }`}
           >
             {campaign.status}
           </span>
-            <Button>
-              <MoveRight />
-            </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

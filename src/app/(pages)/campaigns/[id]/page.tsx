@@ -15,6 +15,7 @@ import Link from "next/link";
 import CampaignData from "@/components/CampaignData";
 import Data from "@/components/Data";
 import Payout from "@/components/Payout";
+import { toast } from "sonner";
 
 interface Campaign {
   id: string;
@@ -43,6 +44,7 @@ const CampaignDetail: React.FC = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const insightsData = [
     { title: "Total Revenue", value: "$45,678", change: "+12%" },
@@ -167,6 +169,41 @@ const CampaignDetail: React.FC = () => {
     }
   }, [id, router]);
 
+  const updateCampaignStatus = async (newStatus : any) => {
+    setIsUpdating(true)
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        router.push("/sign-in")
+        return
+      }
+  
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaign?.id}/publish`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          pin: campaign?.publishPin,
+          status: 'Ready',
+        }),
+      })
+  
+      if (!response.ok) {
+        throw new Error(`Status update failed with status: ${response.status}`)
+      }
+      
+      toast.success(`Campaign status updated to ${newStatus}`)
+      router.push(`/campaigns`)
+    } catch (err) {
+      console.error("Error updating status:", err)
+      toast.error("Failed to update campaign status")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -194,9 +231,14 @@ const CampaignDetail: React.FC = () => {
     <div className="container p-3 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Campaign Details</h1>
+        <div className="flex gap-2">
         <Link href="/campaigns/register-merchant">
           <Button className="bg-black text-white">Add Merchant</Button>
         </Link>
+        <Button className="bg-black text-white" onClick={updateCampaignStatus}>
+          Set to Draft
+        </Button>
+        </div>
       </div>
 
       <div className="flex justify-between items-center">
