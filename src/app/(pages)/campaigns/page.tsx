@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, AlertCircle, Plus, Calendar } from "lucide-react"
+import { Loader2, AlertCircle, Plus, Calendar, MoveRight } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -191,12 +191,14 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
             <p className="text-muted-foreground mt-1">{campaign.description}</p>
           </div>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-            }`}
+            className={`py-1 text-xs rounded-full ${campaign.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+              }`}
           >
             {campaign.status}
           </span>
+            <Button>
+              <MoveRight />
+            </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
