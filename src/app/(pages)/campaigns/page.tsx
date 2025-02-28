@@ -236,7 +236,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
               </Link>
 
               <Button variant="outline" className="bg-black text-white">
-                <Link href={`/drafts/${campaign.id}`}>Download</Link>
+                <Link href={`/drafts/${campaign.id}/publish`}>Download</Link>
               </Button>
             </>
           )}

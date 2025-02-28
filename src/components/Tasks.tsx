@@ -238,7 +238,7 @@ export default function TaskForm({ activeTab }: { activeTab: string }) {
         payoutConfig: [{ min: '', max: '', avg: '' }]
       })
 
-      router.push(`/drafts/${campaignId}`)
+      router.push(`/drafts/${campaignId}/verify`)
     } catch (err: any) {
       setError(err.message || "Failed to create campaign")
     } finally {
