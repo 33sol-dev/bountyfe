@@ -388,16 +388,16 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-              {merchantData && campaignData && campaignData.company && campaignData.taskConfig && (
-               <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode}`}>
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Processing..." : "Claim Your Reward"}
-                  </Button>
-                </Link>
-              )}
+              <Link
+                href={`https://wa.me/${campaignData.company.phoneNumber}?text=${encodeURIComponent(`${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode}`)}`}
+              >
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Processing..." : "Claim Your Reward"}
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 className="w-full"
@@ -434,7 +434,9 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-              <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
+              <Link
+                href={`https://wa.me/${campaignData.company.phoneNumber}?text=${encodeURIComponent(`${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode}`)}`}
+              >
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
                   disabled={isSubmitting}
