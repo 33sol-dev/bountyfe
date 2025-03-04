@@ -5,12 +5,30 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Download, Trash2 } from "lucide-react"
+import { Loader2, Download, Trash2, Pause, Play, EditIcon } from "lucide-react"
 import Papa from 'papaparse'
 import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface MerchantData {
   [key: string]: string
+}
+
+interface EditMerchantFormData {
+  merchantName: string
+  upiId: string
+  merchantMobile: string
+  merchantEmail: string
 }
 
 export default function MerchantCSVViewer() {
@@ -21,6 +39,20 @@ export default function MerchantCSVViewer() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [isPausing, setIsPausing] = useState<string | null>(null)
+  const [isActivating, setIsActivating] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState<string | null>(null)
+  
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null)
+  const [editFormData, setEditFormData] = useState<EditMerchantFormData>({
+    merchantName: "",
+    upiId: "",
+    merchantMobile: "",
+    merchantEmail: ""
+  })
+  const [isSaving, setIsSaving] = useState(false)
 
   const fetchMerchantCSV = async () => {
     if (!campaignId) {
@@ -51,19 +83,18 @@ export default function MerchantCSVViewer() {
       }
 
       const csvText = await response.text()
-      
+
       Papa.parse(csvText, {
         header: true,
-        complete: (results :any) => {
+        complete: (results: any) => {
           if (results.data.length > 0) {
-            // Filter out the ID field from headers to display
             const allHeaders = Object.keys(results.data[0])
             const displayHeaders = allHeaders.filter(header => header !== '_id')
             setHeaders(displayHeaders)
             setCSVData(results.data as MerchantData[])
           }
         },
-        error: (error : any) => {
+        error: (error: any) => {
           toast.error(`Failed to parse CSV: ${error.message}`)
         }
       })
@@ -145,6 +176,141 @@ export default function MerchantCSVViewer() {
     }
   }
 
+  const updateMerchantStatus = async (merchantId: string, status: string) => {
+    if (!merchantId || !campaignId) return
+
+    if (status === "paused") {
+      setIsPausing(merchantId)
+    } else if (status === "active") {
+      setIsActivating(merchantId)
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error("Authentication token not found")
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/update-merchant/${merchantId}`,
+        {
+          method: 'PUT',
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ status })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${status === "paused" ? "pause" : "activate"} merchant`)
+      }
+
+      // Update the status in the local state
+      setCSVData(prevData =>
+        prevData.map(row =>
+          row._id === merchantId ? { ...row, status } : row
+        )
+      )
+      toast.success(`Merchant ${status === "paused" ? "paused" : "activated"} successfully`)
+    } catch (err: any) {
+      toast.error(err.message || `Failed to ${status === "paused" ? "pause" : "activate"} merchant`)
+    } finally {
+      if (status === "paused") {
+        setIsPausing(null)
+      } else if (status === "active") {
+        setIsActivating(null)
+      }
+    }
+  }
+
+  const pauseMerchant = (merchantId: string) => {
+    updateMerchantStatus(merchantId, "paused")
+  }
+
+  const activateMerchant = (merchantId: string) => {
+    updateMerchantStatus(merchantId, "active")
+  }
+
+  const openEditModal = (merchantId: string) => {
+    const merchant = csvData.find(row => row._id === merchantId)
+    if (merchant) {
+      setSelectedMerchant(merchantId)
+      setEditFormData({
+        merchantName: merchant.name || "",
+        upiId: merchant.upiId || "",
+        merchantMobile: merchant.mobile || "",
+        merchantEmail: merchant.email || ""
+      })
+      setEditModalOpen(true)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const saveEditedMerchant = async () => {
+    if (!selectedMerchant || !campaignId) return
+
+    setIsSaving(true)
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error("Authentication token not found")
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/update-merchant/${selectedMerchant}`,
+        {
+          method: 'PUT',
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: editFormData.merchantName,
+            upiId: editFormData.upiId,
+            mobile: editFormData.merchantMobile,
+            email: editFormData.merchantEmail
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error("Failed to update merchant")
+      }
+
+      // Update the merchant data in the local state
+      setCSVData(prevData =>
+        prevData.map(row =>
+          row._id === selectedMerchant
+            ? {
+                ...row,
+                name: editFormData.merchantName,
+                upiId: editFormData.upiId,
+                mobile: editFormData.merchantMobile,
+                email: editFormData.merchantEmail
+              }
+            : row
+        )
+      )
+
+      toast.success("Merchant updated successfully")
+      setEditModalOpen(false)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update merchant")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   useEffect(() => {
     fetchMerchantCSV()
   }, [campaignId])
@@ -197,11 +363,20 @@ export default function MerchantCSVViewer() {
               {csvData.map((row, index) => (
                 <TableRow key={index}>
                   {headers.map((header) => (
-                    <TableCell 
-                      key={`${index}-${header}`} 
+                    <TableCell
+                      key={`${index}-${header}`}
                       className={header === "qrLink" ? "max-w-xs break-all" : ""}
                     >
-                      {header === "qrLink" ? (
+                      {header === "name" ? (
+                        <div className="flex items-center gap-2">
+                          {row[header]}
+                          {row.status === "paused" && (
+                            <Badge variant="outline" className="bg-gray-200 text-gray-700">
+                              Paused
+                            </Badge>
+                          )}
+                        </div>
+                      ) : header === "qrLink" ? (
                         <div className="max-w-xs overflow-hidden break-words py-2">
                           {row[header]}
                         </div>
@@ -211,18 +386,58 @@ export default function MerchantCSVViewer() {
                     </TableCell>
                   ))}
                   <TableCell>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteMerchant(row._id)}
-                      disabled={isDeleting === row._id}
-                    >
-                      {isDeleting === row._id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="flex gap-2">
+                      {row.status === "paused" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => activateMerchant(row._id)}
+                          disabled={isActivating === row._id}
+                          className="bg-black text-white border-none"
+                        >
+                          {isActivating === row._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                        </Button>
                       ) : (
-                        <Trash2 className="h-4 w-4" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => pauseMerchant(row._id)}
+                          disabled={isPausing === row._id}
+                          className="bg-black text-white border-none"
+                        >
+                          {isPausing === row._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Pause className="h-4 w-4" />
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditModal(row._id)}
+                        className="bg-black text-white border-none"
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteMerchant(row._id)}
+                        className="bg-black text-white"
+                        disabled={isDeleting === row._id}
+                      >
+                        {isDeleting === row._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -230,6 +445,86 @@ export default function MerchantCSVViewer() {
           </Table>
         </div>
       )}
+
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white">
+          <DialogHeader>
+            <DialogTitle>Edit Merchant</DialogTitle>
+            <DialogDescription>
+              Update the merchant information below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 ">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="merchantName" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="merchantName"
+                name="merchantName"
+                value={editFormData.merchantName}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="upiId" className="text-right">
+                UPI ID
+              </Label>
+              <Input
+                id="upiId"
+                name="upiId"
+                value={editFormData.upiId}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="merchantMobile" className="text-right">
+                Mobile
+              </Label>
+              <Input
+                id="merchantMobile"
+                name="merchantMobile"
+                value={editFormData.merchantMobile}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="merchantEmail" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="merchantEmail"
+                name="merchantEmail"
+                value={editFormData.merchantEmail}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={saveEditedMerchant}
+              disabled={isSaving}
+              className="bg-black text-white"
+            >
+              {isSaving ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving</>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
