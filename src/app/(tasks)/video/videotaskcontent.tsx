@@ -66,7 +66,7 @@ const VideoTask = () => {
   const [formData, setFormData] = useState({
     phoneNo: "",
   })
-  const [ merchantData, setMerchantData ] = useState<any>(null)
+  const [merchantData, setMerchantData] = useState<any>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -86,8 +86,16 @@ const VideoTask = () => {
         if (!response.ok) throw new Error('Failed to fetch merchant data')
 
         const data = await response.json()
+
+        // Add this right before your return statement
+        console.log("merchantData:", merchantData);
+        console.log("merchantCode:", merchantData?.merchantCode);
+        console.log("campaignData:", campaignData);
+        console.log("triggerText:", campaignData?.taskConfig?.triggerText);
+        console.log("phoneNumber:", campaignData?.company?.phoneNumber);
         console.log(data)
         setMerchantData(data.merchant)
+        console.log("merchantCode:", merchantData?.merchantCode);
       } catch (error) {
         console.error('Error fetching merchant data:', error)
       } finally {
@@ -237,7 +245,7 @@ const VideoTask = () => {
                 src={videoUrl}
                 onEnded={handleVideoEnd}
                 autoPlay
-                muted 
+                muted
               />
             )}
 
@@ -380,13 +388,16 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Processing..." : "Claim Your Reward"}
-              </Button>
+              {merchantData && campaignData && campaignData.company && campaignData.taskConfig && (
+               <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode}`}>
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Processing..." : "Claim Your Reward"}
+                  </Button>
+                </Link>
+              )}
               <Button
                 variant="outline"
                 className="w-full"
@@ -394,7 +405,6 @@ const VideoTask = () => {
               >
                 Maybe Later
               </Button>
-              </Link>
             </div>
           </DialogContent>
         </Dialog>
@@ -424,20 +434,20 @@ const VideoTask = () => {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-            <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Processing..." : "Claim Your Reward"}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowTaskDialog(false)}
-              >
-                Maybe Later
-              </Button>
+              <Link href={`https://wa.me/${campaignData.company.phoneNumber}?text=${campaignData.taskConfig.triggerText}-${merchantData?.merchantCode?.code}`}>
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Processing..." : "Claim Your Reward"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowTaskDialog(false)}
+                >
+                  Maybe Later
+                </Button>
               </Link>
             </div>
           </DialogContent>
