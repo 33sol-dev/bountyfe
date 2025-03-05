@@ -221,7 +221,6 @@ const VideoTask = () => {
     if (videoRef.current && videoUrl) {
       setIsPlaying(true)
       videoRef.current.autoplay = true
-      videoRef.current.muted = true
       videoRef.current.play().catch(error => {
         console.log("Autoplay failed:", error)
         setIsPlaying(false)
@@ -237,15 +236,14 @@ const VideoTask = () => {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl bg-white border-gray-200">
         <CardContent className="p-0">
-          <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden group">
-            {videoUrl && (
+        <div className="relative w-full bg-black rounded-t-lg overflow-hidden group">
+       {videoUrl && (
               <video
                 ref={videoRef}
                 className="w-full h-full object-contain"
                 src={videoUrl}
                 onEnded={handleVideoEnd}
                 autoPlay
-                muted
               />
             )}
 
