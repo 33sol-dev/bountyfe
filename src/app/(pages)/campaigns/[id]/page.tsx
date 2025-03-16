@@ -1,11 +1,9 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, AlertCircle, Download } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JSZip from "jszip";
@@ -34,10 +32,6 @@ interface Campaign {
   rewardAmount: string;
 }
 
-interface PayoutProps {
-  campaignId: string;
-}
-
 const CampaignDetail: React.FC = () => {
   const router = useRouter();
   const { id } = useParams();
@@ -46,31 +40,51 @@ const CampaignDetail: React.FC = () => {
   const [error, setError] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const insightsData = [
-    { title: "Total Revenue", value: "$45,678", change: "+12%" },
-    { title: "Active Users", value: "2,345", change: "+8%" },
-    { title: "Conversion Rate", value: "3.2%", change: "-1%" },
-  ];
+  // Function to directly create a dummy merchant
+  const addDummyMerchant = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId");
+      const campaignId = localStorage.getItem("campaignId");
+      if (!token || !companyId || !campaignId) {
+        throw new Error("Missing required campaign or company information");
+      }
 
-  const payoutData = [
-    { method: "Bank Transfer", status: "Active", fee: "1.5%" },
-    { method: "PayPal", status: "Inactive", fee: "2.9%" },
-    { method: "Stripe", status: "Active", fee: "2.5%" },
-  ];
+      const payload = {
+        merchantName: "Dummy Merchant",
+        upiId: "",
+        merchantMobile: "",
+        merchantEmail: "",
+        address: "",
+        company: companyId,
+        campaignId: campaignId,
+        isDummy: true,
+      };
 
-  const dataTable = [
-    {
-      waNumber: "+91 90296...",
-      name: "Vishal",
-      phone: "+90 296362...",
-      pincode: "400053",
-      state: "Maharashtra",
-      address: "123 Main St",
-      city: "Mumbai",
-      landmark: "Near Park",
-    },
-    // Add more rows as needed
-  ];
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create dummy merchant");
+      }
+
+      toast.success("Dummy merchant created successfully!");
+      // Optionally, you could refresh your merchant list or navigate to a merchants page
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create dummy merchant");
+    }
+  };
 
   const getCampaignQrs = async () => {
     try {
@@ -169,40 +183,43 @@ const CampaignDetail: React.FC = () => {
     }
   }, [id, router]);
 
-  const updateCampaignStatus = async (newStatus : any) => {
-    setIsUpdating(true)
+  const updateCampaignStatus = async (newStatus: any) => {
+    setIsUpdating(true);
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       if (!token) {
-        router.push("/sign-in")
-        return
+        router.push("/sign-in");
+        return;
       }
-  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaign?.id}/publish`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          pin: campaign?.publishPin,
-          status: 'Ready',
-        }),
-      })
-  
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/campaigns/${campaign?.id}/publish`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            pin: campaign?.publishPin,
+            status: "Ready",
+          }),
+        }
+      );
+
       if (!response.ok) {
-        throw new Error(`Status update failed with status: ${response.status}`)
+        throw new Error(`Status update failed with status: ${response.status}`);
       }
-      
-      toast.success(`Campaign status updated to ${newStatus}`)
-      router.push(`/campaigns`)
+
+      toast.success(`Campaign status updated to ${newStatus}`);
+      router.push(`/campaigns`);
     } catch (err) {
-      console.error("Error updating status:", err)
-      toast.error("Failed to update campaign status")
+      console.error("Error updating status:", err);
+      toast.error("Failed to update campaign status");
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -227,38 +244,53 @@ const CampaignDetail: React.FC = () => {
   }
 
   return (
-
     <div className="container p-3 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Campaign Details</h1>
         <div className="flex gap-2">
-        <Link href="/campaigns/register-merchant">
-          <Button className="bg-black text-white">Add Merchant</Button>
-        </Link>
-        <Button className="bg-black text-white" onClick={updateCampaignStatus}>
-          Set to Draft
-        </Button>
+          {/* Button for adding a full merchant */}
+          <Link href="/campaigns/register-merchant">
+            <Button className="bg-black text-white">Add Merchant</Button>
+          </Link>
+          {/* Button for directly creating a dummy merchant */}
+          <Button
+            className="bg-black text-white"
+            onClick={addDummyMerchant}
+          >
+            Add Dummy Merchant
+          </Button>
+          <Button
+            className="bg-black text-white"
+            onClick={() => updateCampaignStatus("Draft")}
+          >
+            Set to Draft
+          </Button>
         </div>
       </div>
 
       <div className="flex justify-between items-center">
-        <Tabs defaultValue="campaign" className="">
+        <Tabs defaultValue="campaign">
           <TabsList>
-            <TabsTrigger className="hover:bg-gray" value="campaign">Campaign</TabsTrigger>
-            <TabsTrigger className="hover:bg-gray" value="payout">Payout</TabsTrigger>
-            <TabsTrigger className="hover:bg-gray" value="data">Data</TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="campaign">
+              Campaign
+            </TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="payout">
+              Payout
+            </TabsTrigger>
+            <TabsTrigger className="hover:bg-gray" value="data">
+              Data
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="campaign">
             <CampaignData />
           </TabsContent>
           <TabsContent value="payout">
-            <Payout campaignId={campaign.id}/>
+            <Payout campaignId={campaign.id} />
           </TabsContent>
           <TabsContent value="data">
             <Data />
           </TabsContent>
         </Tabs>
-
       </div>
     </div>
   );
