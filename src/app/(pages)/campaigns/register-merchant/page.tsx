@@ -30,6 +30,8 @@ export default function MerchantForm() {
     campaignId: "",
   };
 
+  // New state for dummy merchant flag
+  const [isDummy, setIsDummy] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>(initialFormState);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -38,7 +40,7 @@ export default function MerchantForm() {
   useEffect(() => {
     const storedCampaignId = localStorage.getItem("campaignId");
     if (storedCampaignId) {
-      setFormData(prev => ({ ...prev, campaignId: storedCampaignId }));
+      setFormData((prev) => ({ ...prev, campaignId: storedCampaignId }));
     }
   }, []);
 
@@ -46,25 +48,34 @@ export default function MerchantForm() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
+  // New handler for toggling dummy merchant creation
+  const handleDummyToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsDummy(e.target.checked);
+  };
+
   const validateForm = (): boolean => {
-    if (!formData.merchantName.trim()) {
-      toast.error("Merchant name is required");
-      return false;
+    // If creating a full merchant, enforce validations
+    if (!isDummy) {
+      if (!formData.merchantName.trim()) {
+        toast.error("Merchant name is required");
+        return false;
+      }
+      if (!formData.upiId.trim()) {
+        toast.error("UPI ID is required");
+        return false;
+      }
+      if (!formData.merchantMobile.trim()) {
+        toast.error("Mobile number is required");
+        return false;
+      }
     }
-    if (!formData.upiId.trim()) {
-      toast.error("UPI ID is required");
-      return false;
-    }
-    if (!formData.merchantMobile.trim()) {
-      toast.error("Mobile number is required");
-      return false;
-    }
+    // Common validations
     if (!formData.company.trim()) {
       toast.error("Company name is required");
       return false;
@@ -73,7 +84,7 @@ export default function MerchantForm() {
       toast.error("Campaign ID is missing");
       return false;
     }
-    if (formData.merchantEmail && !formData.merchantEmail.includes('@')) {
+    if (formData.merchantEmail && !formData.merchantEmail.includes("@")) {
       toast.error("Please enter a valid email address");
       return false;
     }
@@ -90,6 +101,7 @@ export default function MerchantForm() {
     setLoading(true);
 
     try {
+      // Pass the isDummy flag along with the form data
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BOUNTY_URL}/api/merchant/create`,
         {
@@ -97,7 +109,7 @@ export default function MerchantForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, isDummy }),
         }
       );
 
@@ -113,7 +125,9 @@ export default function MerchantForm() {
         campaignId: formData.campaignId,
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error in creating merchant");
+      toast.error(
+        err instanceof Error ? err.message : "Error in creating merchant"
+      );
     } finally {
       setLoading(false);
     }
@@ -123,9 +137,22 @@ export default function MerchantForm() {
     <div className="min-h-screen p-4 bg-white">
       <div className="max-w-6xl mx-auto rounded-lg shadow-sm">
         <div className="p-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            Add New Merchant
-          </h2>
+          <h2 className="text-3xl font-bold text-black mb-8">Add New Merchant</h2>
+
+          {/* New toggle for dummy merchant creation */}
+          <div className="mb-4">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={isDummy}
+                onChange={handleDummyToggle}
+                className="form-checkbox h-5 w-5"
+              />
+              <span className="ml-2 text-gray-700">
+                Create as Dummy Merchant (details can be attached later)
+              </span>
+            </label>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -134,7 +161,7 @@ export default function MerchantForm() {
                   htmlFor="merchantName"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Merchant Name *
+                  Merchant Name {isDummy ? "(Optional)" : "*"}
                 </label>
                 <input
                   type="text"
@@ -142,7 +169,7 @@ export default function MerchantForm() {
                   name="merchantName"
                   value={formData.merchantName}
                   onChange={handleChange}
-                  required
+                  required={!isDummy}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter merchant name"
                 />
@@ -153,7 +180,7 @@ export default function MerchantForm() {
                   htmlFor="upiId"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  UPI ID *
+                  UPI ID {isDummy ? "(Optional)" : "*"}
                 </label>
                 <input
                   type="text"
@@ -161,7 +188,7 @@ export default function MerchantForm() {
                   name="upiId"
                   value={formData.upiId}
                   onChange={handleChange}
-                  required
+                  required={!isDummy}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter UPI ID"
                 />
@@ -173,7 +200,7 @@ export default function MerchantForm() {
                 htmlFor="merchantMobile"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Mobile Number *
+                Mobile Number {isDummy ? "(Optional)" : "*"}
               </label>
               <input
                 type="tel"
@@ -181,9 +208,27 @@ export default function MerchantForm() {
                 name="merchantMobile"
                 value={formData.merchantMobile}
                 onChange={handleChange}
-                required
+                required={!isDummy}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter mobile number"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="merchantEmail"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="merchantEmail"
+                name="merchantEmail"
+                value={formData.merchantEmail}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter email address"
               />
             </div>
 
@@ -219,5 +264,4 @@ export default function MerchantForm() {
       </div>
     </div>
   );
-};
-
+}
